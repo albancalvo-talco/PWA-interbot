@@ -411,7 +411,7 @@ async function sendToAgent(audioBase64,textInput){
     if(data.speech)addBubble('agent',data.speech);
     updateProgressUI();
 
-    if(data.audio_base64){
+    if(data.audio_base64 && textInput !== '__init__'){
       await playAudio(data.audio_base64);
     }
 
@@ -452,12 +452,8 @@ async function playAudio(base64){
       }
 
       // Construire l'URL data: proprement
-      let src;
-      if(base64.startsWith('data:')){
-        src=base64;
-      } else {
-        src='data:audio/mp3;base64,'+base64.replace(/[\s\r\n]+/g,'');
-      }
+      const clean = base64.includes(',') ? base64.split(',')[1] : base64;
+      const src = 'data:audio/mpeg;base64,' + clean.replace(/[\s\r\n]+/g,'');}
 
       const audio=new Audio(src);
 
