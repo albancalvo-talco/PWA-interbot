@@ -280,27 +280,37 @@ function saveUserSession(user){ localStorage.setItem(SESSION_KEY, JSON.stringify
 function loadUserSession(){ try{ const raw=localStorage.getItem(SESSION_KEY); if(!raw)return null; const d=JSON.parse(raw); if(Date.now()>d.expires){localStorage.removeItem(SESSION_KEY);return null;} return d.user; }catch(e){return null;} }
 
 // ══ CORRECTION ROBUSTE JWT GOOGLE ══
-function handleGoogleCredential(r){
-  try{ 
-    // Décodage du JWT 100% décomposé pour éviter l'erreur TypeError
+function handleGoogleCredential(r) {
+  try {
+    // Décodage JWT
     const jwtParts = r.credential.split('.');
-    const base64Url = jwtParts; // <-- CORRIGÉ : Extraction correcte de l'index 1 (le payload du token)
+    const base64Url = jwtParts[1]; // ✅ index [1] = payload
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+    const jsonPayload = decodeURIComponent(
+      window.atob(base64).split('').map(function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-
-    const p = JSON.parse(jsonPayload); 
+      }).join('')
+    );
+    const p = JSON.parse(jsonPayload);
     const email = p.email || '';
-    
-    // Découpage sécurisé de l'email pour trouver le nom
+
+    // Extraction du nom depuis l'email si p.name absent
     const emailParts = email.split('@');
-    const name = p.name || emailParts; // <-- CORRIGÉ : Extraction correcte de l'index 0 (première partie de l'email)
-    
-    if(!email.endsWith('@' + CONFIG.ALLOWED_DOMAIN)){
-      document.getElementById('login-error').style.display='block';
+    const name = p.name || emailParts[0]; // ✅ index [0] = partie avant @
+
+    if (!email.endsWith('@' + CONFIG.ALLOWED_DOMAIN)) {
+      document.getElementById('login-error').style.display = 'block';
       return;
-    } 
+    }
+
+    // ✅ Connexion réussie, continuer...
+    console.log('Connecté :', name, email);
+
+  } catch(e) {
+    console.error('Erreur décodage Google :', e);
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
     document.getElementById('login-error').style.display='none'; 
     
     const nameParts = name.split(' ');
