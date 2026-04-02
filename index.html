@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0e0e0e">
 <title>TALCO — Agent Vocal</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- SUPPRIMÉ: <script src="https://accounts.google.com/gsi/client"> — plus besoin, on fait du redirect OAuth2 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -66,6 +66,8 @@ body::before {
 .btn-history{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:6px 10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--gold);cursor:pointer;transition:all .2s;}
 .btn-history:active{background:var(--s3);transform:scale(0.95);}
 .btn-history svg{width:16px;height:16px;}
+.btn-logout{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:6px 10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .2s;}
+.btn-logout:active{background:var(--s3);transform:scale(0.95);}
 
 .chat-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:2rem;}
 .orb-container{display:flex;flex-direction:column;align-items:center;gap:30px;transform:translateY(-20px);}
@@ -136,6 +138,12 @@ body::before {
 
 .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--b2);border-radius:100px;padding:10px 20px;font-size:12px;color:var(--text);white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;}
 .toast.visible{opacity:1;}
+
+/* Spinner login pendant le redirect retour */
+.login-spinner{display:none;flex-direction:column;align-items:center;gap:12px;margin-top:1.5rem;}
+.login-spinner.visible{display:flex;}
+.login-spinner .spinner-ring{width:32px;height:32px;border:3px solid var(--b2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+.login-spinner .spinner-text{font-size:12px;color:var(--text2);}
 </style>
 </head>
 <body>
@@ -148,17 +156,18 @@ body::before {
   <div class="login-divider"></div>
   <h1 class="login-title">Agent<br><span>vocal</span></h1>
   <p class="login-sub">Rapport d'intervention par la voix</p>
-  <div id="g_id_onload"
-    data-client_id="303849110460-10rqg6oco2jseasj4ccsh1n0e4btulea.apps.googleusercontent.com"
-    data-callback="handleGoogleCredential"
-    data-auto_prompt="false"
-    data-use_fedcm_for_prompt="true">
-  </div>
-  <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black" data-text="signin_with" data-size="large" data-locale="fr" data-width="280"></div>
-  <button class="btn-google" id="btn-fallback" onclick="loginFallback()" style="display:none">
+
+  <!-- FIX #1 : OAuth2 redirect au lieu de One Tap popup -->
+  <button class="btn-google" id="btn-google-login" onclick="loginWithGoogleRedirect()">
     <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-    Se connecter
+    Se connecter avec Google
   </button>
+
+  <div class="login-spinner" id="login-spinner">
+    <div class="spinner-ring"></div>
+    <div class="spinner-text">Connexion en cours...</div>
+  </div>
+
   <p class="login-note">Réservé aux comptes @talco-lr.com</p>
   <div id="login-error" style="display:none;margin-top:1rem;padding:10px 16px;background:rgba(224,82,82,.1);border:1px solid var(--danger);border-radius:10px;font-size:12px;color:var(--danger);text-align:center;">⚠ Compte non autorisé</div>
 </div>
@@ -174,6 +183,7 @@ body::before {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
         Avancement
       </button>
+      <button class="btn-logout" onclick="logout()">Déconnexion</button>
     </div>
   </div>
 
@@ -221,18 +231,15 @@ body::before {
 <div class="toast" id="toast"></div>
 
 <script>
-window.addEventListener('DOMContentLoaded',()=>{
-  const saved=loadUserSession();
-  if(saved){ state.user=saved; startSession(); }
-  document.getElementById('history-modal').addEventListener('click',(e)=>{
-    if(e.target===document.getElementById('history-modal')) toggleModal(false);
-  });
-});
-
+// ══════════════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════════════
 const CONFIG={
   GOOGLE_CLIENT_ID:'303849110460-10rqg6oco2jseasj4ccsh1n0e4btulea.apps.googleusercontent.com',
   N8N_VOICE_URL:'https://n8n.talco-lr.com/webhook/talco-voice-chat',
-  ALLOWED_DOMAIN:'talco-lr.com'
+  ALLOWED_DOMAIN:'talco-lr.com',
+  // L'URL de redirect = l'URL de la PWA sur GitHub Pages
+  REDIRECT_URI: window.location.origin + window.location.pathname
 };
 
 const FIELD_LABELS={
@@ -250,54 +257,164 @@ const FIELD_ORDER=Object.keys(FIELD_LABELS);
 let state={
   user:null,session_id:null,history:[],responses:{},
   is_complete:false,isListening:false,isProcessing:false,
-  mediaRecorder:null,audioChunks:[],currentAudio:null,
+  mediaRecorder:null,audioChunks:[],currentAudioSource:null,
   interactionMode:'ptt'
 };
 
+// ══════════════════════════════════════════════════════════════
+//  SESSION PERSISTENCE
+// ══════════════════════════════════════════════════════════════
 const SESSION_KEY='talco_user_session',SESSION_TTL=7*24*60*60*1000;
 function saveUserSession(user){localStorage.setItem(SESSION_KEY,JSON.stringify({user,expires:Date.now()+SESSION_TTL}));}
 function loadUserSession(){try{const raw=localStorage.getItem(SESSION_KEY);if(!raw)return null;const d=JSON.parse(raw);if(Date.now()>d.expires){localStorage.removeItem(SESSION_KEY);return null;}return d.user;}catch(e){return null;}}
 
-function handleGoogleCredential(r){
-  try{
-    const jwtParts=r.credential.split('.');
-    const base64Url=jwtParts[1];
-    const base64=base64Url.replace(/-/g,'+').replace(/_/g,'/');
-    const jsonPayload=decodeURIComponent(window.atob(base64).split('').map(function(c){return '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2);}).join(''));
-    const p=JSON.parse(jsonPayload);
-    const email=p.email||'';
-    const emailParts=email.split('@');
-    const name=p.name||emailParts[0];
-    if(!email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){document.getElementById('login-error').style.display='block';return;}
-    document.getElementById('login-error').style.display='none';
-    const nameParts=name.split(' ');
-    state.user={email,name,initials:nameParts.map(s=>s||'').join('').slice(0,2).toUpperCase()};
+// ══════════════════════════════════════════════════════════════
+//  FIX #1 — GOOGLE OAuth2 REDIRECT FLOW (plus de popup!)
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * Lance la redirection vers Google OAuth2.
+ * Implicit flow : on reçoit un access_token dans le hash fragment au retour.
+ * Aucune popup, aucun postMessage, compatible COOP GitHub Pages.
+ */
+function loginWithGoogleRedirect(){
+  // Générer un state anti-CSRF et le stocker
+  const oauthState = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+  sessionStorage.setItem('oauth_state', oauthState);
+
+  const params = new URLSearchParams({
+    client_id: CONFIG.GOOGLE_CLIENT_ID,
+    redirect_uri: CONFIG.REDIRECT_URI,
+    response_type: 'token',
+    scope: 'openid email profile',
+    state: oauthState,
+    prompt: 'select_account',
+    // Restreindre au domaine talco-lr.com
+    hd: CONFIG.ALLOWED_DOMAIN
+  });
+
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+}
+
+/**
+ * Au chargement de la page, vérifier si on revient d'un redirect OAuth2.
+ * Le hash contient : #access_token=...&token_type=Bearer&state=...
+ */
+function handleOAuthRedirect(){
+  const hash = window.location.hash.substring(1);
+  if(!hash || !hash.includes('access_token')) return false;
+
+  // Parser les params du hash
+  const params = new URLSearchParams(hash);
+  const accessToken = params.get('access_token');
+  const returnedState = params.get('state');
+  const savedState = sessionStorage.getItem('oauth_state');
+
+  // Nettoyer le hash de l'URL (esthétique)
+  history.replaceState(null, '', window.location.pathname);
+  sessionStorage.removeItem('oauth_state');
+
+  // Vérifier le state anti-CSRF
+  if(!returnedState || returnedState !== savedState){
+    console.error('OAuth state mismatch');
+    showLoginError('Erreur de sécurité (state mismatch). Réessayez.');
+    return true; // On a bien traité un redirect, même en erreur
+  }
+
+  if(!accessToken){
+    showLoginError('Token manquant. Réessayez.');
+    return true;
+  }
+
+  // Montrer le spinner pendant qu'on récupère le profil
+  document.getElementById('btn-google-login').style.display = 'none';
+  document.getElementById('login-spinner').classList.add('visible');
+
+  // Appeler l'API Google userinfo avec l'access_token
+  fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { 'Authorization': 'Bearer ' + accessToken }
+  })
+  .then(r => {
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(profile => {
+    const email = profile.email || '';
+    const name = profile.name || email.split('@')[0];
+
+    // Vérifier le domaine
+    if(!email.endsWith('@' + CONFIG.ALLOWED_DOMAIN)){
+      showLoginError('Compte non autorisé. Utilisez un compte @' + CONFIG.ALLOWED_DOMAIN);
+      document.getElementById('btn-google-login').style.display = 'flex';
+      document.getElementById('login-spinner').classList.remove('visible');
+      return;
+    }
+
+    const nameParts = name.split(' ');
+    state.user = {
+      email,
+      name,
+      initials: nameParts.map(s => (s[0]||'')).join('').slice(0,2).toUpperCase()
+    };
     saveUserSession(state.user);
     startSession();
-  }catch(e){
-    console.error('Erreur décodage Google:',e);
-    showToast('Erreur de connexion');
+  })
+  .catch(e => {
+    console.error('Erreur profil Google:', e);
+    showLoginError('Impossible de récupérer le profil. Réessayez.');
+    document.getElementById('btn-google-login').style.display = 'flex';
+    document.getElementById('login-spinner').classList.remove('visible');
+  });
+
+  return true;
+}
+
+function showLoginError(msg){
+  const el = document.getElementById('login-error');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+
+function logout(){
+  localStorage.removeItem(SESSION_KEY);
+  state.user = null;
+  state.session_id = null;
+  showScreen('login');
+  document.getElementById('btn-google-login').style.display = 'flex';
+  document.getElementById('login-spinner').classList.remove('visible');
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INIT — Ordre de priorité : redirect OAuth > session sauvée > écran login
+// ══════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  // 1) Vérifier si on revient d'un redirect Google
+  const handledRedirect = handleOAuthRedirect();
+
+  // 2) Si pas de redirect, vérifier la session sauvée
+  if(!handledRedirect){
+    const saved = loadUserSession();
+    if(saved){
+      state.user = saved;
+      startSession();
+    }
   }
-}
 
-function loginFallback(){
-  const email=prompt('Email :','prenom.nom@talco-lr.com');
-  if(!email||!email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){document.getElementById('login-error').style.display='block';return;}
-  document.getElementById('login-error').style.display='none';
-  const emailParts=email.split('@');
-  const rawName=emailParts[0].split('.').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' ');
-  const nameParts=rawName.split(' ');
-  state.user={email,name:rawName,initials:nameParts.map(s=>s||'').join('').slice(0,2).toUpperCase()};
-  saveUserSession(state.user);
-  startSession();
-}
+  // Fermer modal au clic sur overlay
+  document.getElementById('history-modal').addEventListener('click', (e) => {
+    if(e.target === document.getElementById('history-modal')) toggleModal(false);
+  });
+});
 
-setTimeout(()=>{if(!window.google)document.getElementById('btn-fallback').style.display='flex';},4000);
-
+// ══════════════════════════════════════════════════════════════
+//  SESSION & UI
+// ══════════════════════════════════════════════════════════════
 function startSession(){
   state.session_id=`session_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
   state.history=[];state.responses={};state.is_complete=false;
   document.getElementById('conv-history').innerHTML='';
+  document.getElementById('btn-mic').style.pointerEvents='auto';
   updateProgressUI();
   showScreen('chat');
   sendToAgent(null,'__init__');
@@ -313,11 +430,14 @@ function setMode(mode){
   document.getElementById('mode-ptt').classList.toggle('active',mode==='ptt');
   document.getElementById('mode-cont').classList.toggle('active',mode==='continuous');
   document.getElementById('mode-slider').classList.toggle('right',mode==='continuous');
-  if(!state.isProcessing&&!state.isListening&&!state.currentAudio){
+  if(!state.isProcessing&&!state.isListening&&!state.currentAudioSource){
     document.getElementById('orb-status').textContent=mode==='ptt'?'Maintiens pour parler':'Tape pour parler';
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+//  MICRO / ENREGISTREMENT
+// ══════════════════════════════════════════════════════════════
 const micBtn=document.getElementById('btn-mic');
 micBtn.addEventListener('pointerdown',async(e)=>{
   if(state.isProcessing||state.interactionMode!=='ptt'||state.is_complete)return;
@@ -336,13 +456,13 @@ micBtn.addEventListener('click',async(e)=>{
   e.preventDefault();
   if(state.isListening){stopRecording();}
   else{
-    if(state.currentAudio){state.currentAudio.pause();state.currentAudio=null;}
+    stopCurrentAudio();
     await startRecording();
   }
 });
 
 async function startRecording(){
-  unlockAudio();
+  ensureAudioContext();
   try{
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
     state.audioChunks=[];
@@ -381,6 +501,9 @@ function blobToBase64(blob){
   });
 }
 
+// ══════════════════════════════════════════════════════════════
+//  ENVOI AU SERVEUR n8n
+// ══════════════════════════════════════════════════════════════
 async function sendToAgent(audioBase64,textInput){
   if(state.isProcessing)return;
   state.isProcessing=true;
@@ -402,7 +525,6 @@ async function sendToAgent(audioBase64,textInput){
     state.responses={...state.responses,...(data.responses||{})};
     state.is_complete=data.is_complete||false;
 
-    // Afficher transcription si dispo, sinon icône micro
     if(audioBase64){
       const transcription = data.user_text && data.user_text !== '__init__' ? '🎤 '+data.user_text : '🎤 Message vocal';
       addBubble('user', transcription);
@@ -427,7 +549,7 @@ async function sendToAgent(audioBase64,textInput){
   }finally{
     state.isProcessing=false;
     document.getElementById('sending-indicator').classList.remove('visible');
-    if(!state.is_complete&&!state.currentAudio){
+    if(!state.is_complete&&!state.currentAudioSource){
       setOrbState('idle');
       document.getElementById('orb-status').textContent=state.interactionMode==='ptt'?'Maintiens pour parler':'Tape pour parler';
       document.getElementById('orb-status').className='orb-status';
@@ -435,63 +557,95 @@ async function sendToAgent(audioBase64,textInput){
   }
 }
 
-// ══ LECTURE AUDIO (TTS) ══
-let audioCtx=null;
-function unlockAudio(){
-  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==='suspended')audioCtx.resume();
+// ══════════════════════════════════════════════════════════════
+//  FIX #2 — LECTURE AUDIO TTS via AudioContext (pas new Audio)
+//
+//  Pourquoi : new Audio('data:audio/mpeg;base64,...') provoque
+//  "NotSupportedError: no supported source" sur Safari/iOS.
+//  
+//  Solution : on décode le base64 → ArrayBuffer → decodeAudioData
+//  → AudioBufferSourceNode. Fonctionne partout.
+// ══════════════════════════════════════════════════════════════
+let audioCtx = null;
+
+function ensureAudioContext(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === 'suspended'){
+    audioCtx.resume();
+  }
 }
 
+function stopCurrentAudio(){
+  if(state.currentAudioSource){
+    try{ state.currentAudioSource.stop(); }catch(e){}
+    state.currentAudioSource = null;
+  }
+}
+
+/**
+ * Décode un base64 MP3 et le joue via Web Audio API.
+ * Compatible Safari, Chrome, Firefox, iOS, Android.
+ */
 async function playAudio(base64){
-  return new Promise((resolve)=>{
-    if(!base64){resolve();return;}
+  return new Promise(async (resolve) => {
+    if(!base64){ resolve(); return; }
+
     try{
-      if(state.currentAudio){
-        try{state.currentAudio.pause();}catch(e){}
-        state.currentAudio=null;
+      stopCurrentAudio();
+      ensureAudioContext();
+
+      // 1) Base64 → ArrayBuffer
+      const raw = base64.startsWith('data:') ? base64.split(',')[1] : base64;
+      const binaryString = atob(raw);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for(let i = 0; i < len; i++){
+        bytes[i] = binaryString.charCodeAt(i);
       }
 
-      // Construire l'URL data: proprement
-      const src = base64.startsWith('data:') ? base64 : 'data:audio/mpeg;base64,' + base64;
+      // 2) Décoder l'audio MP3 → AudioBuffer
+      const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer.slice(0));
 
-      const audio=new Audio(src);
+      // 3) Créer un source node et jouer
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
 
       setOrbState('speaking');
-      document.getElementById('orb-status').textContent='TALCO-IA parle...';
-      document.getElementById('orb-status').className='orb-status speaking';
+      document.getElementById('orb-status').textContent = 'TALCO-IA parle...';
+      document.getElementById('orb-status').className = 'orb-status speaking';
 
-      audio.onended=()=>{
-        state.currentAudio=null;
+      source.onended = () => {
+        state.currentAudioSource = null;
         resolve();
-        if(!state.is_complete&&state.interactionMode==='continuous'){
-          setTimeout(()=>{if(!state.isListening&&!state.isProcessing)startRecording();},600);
+        if(!state.is_complete && state.interactionMode === 'continuous'){
+          setTimeout(() => {
+            if(!state.isListening && !state.isProcessing) startRecording();
+          }, 600);
         } else if(!state.is_complete){
           setOrbState('idle');
-          document.getElementById('orb-status').textContent='Maintiens pour parler';
-          document.getElementById('orb-status').className='orb-status';
+          document.getElementById('orb-status').textContent = 'Maintiens pour parler';
+          document.getElementById('orb-status').className = 'orb-status';
         }
       };
 
-      audio.onerror=(e)=>{
-        console.error('Erreur audio:',e);
-        state.currentAudio=null;
-        resolve();
-      };
-
-      state.currentAudio=audio;
-      audio.play().catch((e)=>{
-        console.error('play() refusé:',e);
-        state.currentAudio=null;
-        resolve();
-      });
+      state.currentAudioSource = source;
+      source.start(0);
 
     }catch(e){
-      console.error('Erreur playAudio:',e);
+      console.error('Erreur playAudio:', e);
+      showToast('Erreur lecture audio');
+      state.currentAudioSource = null;
       resolve();
     }
   });
 }
 
+// ══════════════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════════════
 function addBubble(role,text){
   const hist=document.getElementById('conv-history');
   const div=document.createElement('div');
