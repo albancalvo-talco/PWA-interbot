@@ -478,6 +478,9 @@ async function sendToAgent(audioBase64, textInput){
     updateProgressUI();
 
     if(data.audio_base64){
+      async function playAudio(base64){
+  console.log('audio reçu ?', !!base64, base64 ? base64.slice(0,50) : 'NULL');
+  return new Promise(async (resolve)=>{
       await playAudio(data.audio_base64);
     }
 
