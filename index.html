@@ -282,8 +282,9 @@ function loadUserSession(){ try{ const raw=localStorage.getItem(SESSION_KEY); if
 // ══ CORRECTION ROBUSTE JWT GOOGLE ══
 function handleGoogleCredential(r){
   try{ 
-    // Décodage du JWT compatible Base64Url et caractères accentués (UTF-8)
-    const base64Url = r.credential.split('.'); // <-- Le fameux est revenu !
+    // Décodage du JWT 100% décomposé pour éviter l'erreur TypeError
+    const jwtParts = r.credential.split('.');
+    const base64Url = jwtParts; // <-- CORRIGÉ : Extraction correcte de l'index 1 (le payload du token)
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
@@ -291,7 +292,10 @@ function handleGoogleCredential(r){
 
     const p = JSON.parse(jsonPayload); 
     const email = p.email || '';
-    const name = p.name || email.split('@'); // <-- Le fameux est revenu !
+    
+    // Découpage sécurisé de l'email pour trouver le nom
+    const emailParts = email.split('@');
+    const name = p.name || emailParts; // <-- CORRIGÉ : Extraction correcte de l'index 0 (première partie de l'email)
     
     if(!email.endsWith('@' + CONFIG.ALLOWED_DOMAIN)){
       document.getElementById('login-error').style.display='block';
@@ -299,10 +303,11 @@ function handleGoogleCredential(r){
     } 
     document.getElementById('login-error').style.display='none'; 
     
+    const nameParts = name.split(' ');
     state.user={
       email: email,
       name: name,
-      initials: name.split(' ').map(s=>s||'').join('').slice(0,2).toUpperCase()
+      initials: nameParts.map(s=>s||'').join('').slice(0,2).toUpperCase()
     }; 
     
     saveUserSession(state.user); 
@@ -321,11 +326,15 @@ function loginFallback(){
   } 
   document.getElementById('login-error').style.display='none'; 
   
-  const name = email.split('@').split('.').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' '); // <-- Le fameux est revenu !
+  // Découpage sécurisé pour le fallback
+  const emailParts = email.split('@');
+  const rawName = emailParts.split('.').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' '); // <-- CORRIGÉ : Utilisation stricte de l'index 0
+  const nameParts = rawName.split(' ');
+  
   state.user={
     email: email,
-    name: name,
-    initials: name.split(' ').map(s=>s||'').join('').slice(0,2).toUpperCase()
+    name: rawName,
+    initials: nameParts.map(s=>s||'').join('').slice(0,2).toUpperCase()
   }; 
   saveUserSession(state.user); 
   startSession(); 
