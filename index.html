@@ -36,10 +36,9 @@ body::before {
   content: '';
   position: absolute;
   inset: 0;
-  /* Utilisation de l'image de fond envoyée */
   background: url('./istockphoto-1328094196-612x612.jpg') center/cover no-repeat;
-  opacity: 0.08; /* Ajuste l'opacité ici (0.08 = 8%) */
-  filter: grayscale(100%) contrast(120%); /* Effet noir & blanc contrasté */
+  opacity: 0.08;
+  filter: grayscale(100%) contrast(120%);
   z-index: 0;
   pointer-events: none;
 }
@@ -88,7 +87,7 @@ body::before {
 .orb-bg.speaking{animation-duration:2.5s;}
 .orb-bg.processing{animation-duration:4s;filter:blur(18px) hue-rotate(30deg);}
 
-/* Bouton micro (Invisible par dessus l'orbe) */
+/* Bouton micro */
 .btn-mic-main{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;background:transparent;border:none;cursor:pointer;z-index:10;outline:none;box-shadow:none;-webkit-tap-highlight-color:transparent;}
 
 /* Status label */
@@ -142,7 +141,7 @@ body::before {
 .bubble.user{align-self:flex-end;background:rgba(232,169,0,.12);border:1px solid rgba(232,169,0,.2);border-bottom-right-radius:4px;color:var(--text);}
 .bubble.user .bubble-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:.1em;margin-bottom:6px;text-align:right;text-transform:uppercase;}
 
-/* Loading overlay léger */
+/* Loading overlay */
 .sending-indicator{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border:3px solid var(--b2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;display:none;z-index:10;pointer-events:none;}
 .sending-indicator.visible{display:block;}
 @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
@@ -156,7 +155,6 @@ body::before {
 <!-- LOGIN -->
 <div id="screen-login" class="screen active">
   <div class="login-logo-wrap">
-    <!-- Utilisation du logo fourni -->
     <img src="./logo-centre-talco-lr-seul.pdf.png" id="login-logo" alt="TALCO LR">
   </div>
   <div class="login-divider"></div>
@@ -176,7 +174,6 @@ body::before {
 <div id="screen-chat" class="screen">
   <div class="header">
     <div class="header-logo-wrap">
-      <!-- Utilisation du logo fourni -->
       <img src="./logo-centre-talco-lr-seul.pdf.png" id="header-logo" alt="TALCO LR">
     </div>
     <div class="header-right">
@@ -196,7 +193,6 @@ body::before {
         <div class="orb-layer orb-core"></div>
         <div class="orb-layer orb-shine"></div>
         <div class="sending-indicator" id="sending-indicator"></div>
-        <!-- Bouton invisible par dessus l'orbe -->
         <button class="btn-mic-main" id="btn-mic"></button>
       </div>
 
@@ -233,9 +229,7 @@ body::before {
       </div>
     </div>
     <div class="modal-body">
-      <!-- Liste des champs récupérés -->
       <div class="fields-recap-h" id="fields-recap"></div>
-      <!-- Historique bulles texte -->
       <div class="conv-history" id="conv-history"></div>
     </div>
   </div>
@@ -251,7 +245,6 @@ window.addEventListener('DOMContentLoaded',()=>{
     startSession();
   }
   
-  // Fermer modal au clic extérieur
   document.getElementById('history-modal').addEventListener('click', (e) => {
     if(e.target === document.getElementById('history-modal')) toggleModal(false);
   });
@@ -259,7 +252,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 const CONFIG={
   GOOGLE_CLIENT_ID:'303849110460-10rqg6oco2jseasj4ccsh1n0e4btulea.apps.googleusercontent.com',
-  N8N_VOICE_URL:'https://n8n.talco-lr.com/webhook/talco-voice-chat', /* <-- METS BIEN TON URL WEBHOOK ICI */
+  N8N_VOICE_URL:'https://n8n.talco-lr.com/webhook/talco-voice-chat',
   ALLOWED_DOMAIN:'talco-lr.com'
 };
 
@@ -279,42 +272,61 @@ let state={
   user:null, session_id:null, history:[], responses:{},
   is_complete:false, isListening:false, isProcessing:false,
   mediaRecorder:null, audioChunks:[], currentAudio:null,
-  interactionMode: 'ptt' // 'ptt' (Push to Talk) ou 'continuous'
+  interactionMode: 'ptt'
 };
 
-// ══ AUTH ══
 const SESSION_KEY='talco_user_session', SESSION_TTL=7*24*60*60*1000;
 function saveUserSession(user){ localStorage.setItem(SESSION_KEY, JSON.stringify({user, expires:Date.now()+SESSION_TTL})); }
 function loadUserSession(){ try{ const raw=localStorage.getItem(SESSION_KEY); if(!raw)return null; const d=JSON.parse(raw); if(Date.now()>d.expires){localStorage.removeItem(SESSION_KEY);return null;} return d.user; }catch(e){return null;} }
 
-// CORRECTION BUG DECONNEXION ICI
+// ══ CORRECTION ROBUSTE JWT GOOGLE ══
 function handleGoogleCredential(r){
   try{ 
-    const p=JSON.parse(atob(r.credential.split('.'))); 
-    const email=p.email||'',name=p.name||email.split('@'); 
-    if(!email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){
+    // Décodage du JWT compatible Base64Url et caractères accentués (UTF-8)
+    const base64Url = r.credential.split('.');
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    const p = JSON.parse(jsonPayload); 
+    const email = p.email || '';
+    const name = p.name || email.split('@'); 
+    
+    if(!email.endsWith('@' + CONFIG.ALLOWED_DOMAIN)){
       document.getElementById('login-error').style.display='block';
       return;
     } 
     document.getElementById('login-error').style.display='none'; 
-    state.user={email,name,initials:name.split(' ').map(s=>s).join('').slice(0,2).toUpperCase()}; 
+    
+    state.user={
+      email: email,
+      name: name,
+      initials: name.split(' ').map(s=>s||'').join('').slice(0,2).toUpperCase()
+    }; 
+    
     saveUserSession(state.user); 
     startSession(); 
   }catch(e){
     console.error('Erreur lors du décodage Google :', e);
-    showToast('Erreur de connexion');
+    showToast('Erreur de connexion (Voir console)');
   } 
 }
 
 function loginFallback(){ 
   const email=prompt('Email :','prenom.nom@talco-lr.com'); 
-  if(!email||!email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){
+  if(!email || !email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){
     document.getElementById('login-error').style.display='block';
     return;
   } 
   document.getElementById('login-error').style.display='none'; 
-  const name=email.split('@').split('.').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' '); 
-  state.user={email,name,initials:name.split(' ').map(s=>s).join('').slice(0,2).toUpperCase()}; 
+  
+  const name = email.split('@').split('.').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' '); 
+  state.user={
+    email: email,
+    name: name,
+    initials: name.split(' ').map(s=>s||'').join('').slice(0,2).toUpperCase()
+  }; 
   saveUserSession(state.user); 
   startSession(); 
 }
@@ -417,7 +429,6 @@ function blobToBase64(blob){
   return new Promise((res,rej)=>{
     const r=new FileReader();
     r.onload=()=>{
-      // NETTOYAGE FRONTEND : On coupe à la virgule
       const base64Data = r.result.split(',');
       res(base64Data);
     };
@@ -507,11 +518,10 @@ async function playAudio(base64){
         state.currentAudio = null;
         resolve(); 
         
-        // AUTO-REPRISE SI MODE CONTINU
         if(!state.is_complete && state.interactionMode === 'continuous') {
             setTimeout(() => {
                 if(!state.isListening && !state.isProcessing) startRecording();
-            }, 600); // Petite pause naturelle de 0.6s
+            }, 600); 
         } else if (!state.is_complete) {
             setOrbState('idle');
             document.getElementById('orb-status').textContent='Maintiens pour parler';
