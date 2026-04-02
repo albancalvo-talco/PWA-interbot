@@ -19,26 +19,49 @@
   --danger:#e05252;--success:#4ecb7a;--warn:#f5a623;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
-.screen{display:none;flex-direction:column;height:100dvh;overflow:hidden;}
+
+body{
+  font-family:'Inter',sans-serif;
+  background-color:var(--bg);
+  color:var(--text);
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ══ PHOTO DE FOND FONDU ══ */
+body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* Utilisation de l'image de fond envoyée */
+  background: url('./istockphoto-1328094196-612x612.jpg') center/cover no-repeat;
+  opacity: 0.08; /* Ajuste l'opacité ici (0.08 = 8%) */
+  filter: grayscale(100%) contrast(120%); /* Effet noir & blanc contrasté */
+  z-index: 0;
+  pointer-events: none;
+}
+
+.screen{display:none;flex-direction:column;height:100dvh;overflow:hidden;position:relative;z-index:1;}
 .screen.active{display:flex;}
 
 /* ══ LOGIN ══ */
-#screen-login{align-items:center;justify-content:center;padding:2rem 1.5rem;gap:0;position:relative;overflow:hidden;}
-#screen-login::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(232,169,0,.09) 1px,transparent 1px);background-size:30px 30px;pointer-events:none;}
-.login-logo-wrap{background:#fff;border-radius:12px;padding:12px 18px;margin-bottom:2rem;display:inline-block;box-shadow:0 0 0 1px rgba(232,169,0,.2),0 8px 40px rgba(0,0,0,.6);position:relative;z-index:1;}
+#screen-login{align-items:center;justify-content:center;padding:2rem 1.5rem;gap:0;}
+.login-logo-wrap{background:#fff;border-radius:12px;padding:12px 18px;margin-bottom:2rem;display:inline-block;box-shadow:0 0 0 1px rgba(232,169,0,.2),0 8px 40px rgba(0,0,0,.6);}
 .login-logo-wrap img{width:110px;display:block;pointer-events:none;}
-.login-divider{width:36px;height:3px;background:var(--gold);border-radius:2px;margin:0 auto 1.8rem;position:relative;z-index:1;}
-.login-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,8vw,2.6rem);font-weight:800;text-align:center;line-height:1.1;margin-bottom:.4rem;letter-spacing:-.02em;position:relative;z-index:1;}
+.login-divider{width:36px;height:3px;background:var(--gold);border-radius:2px;margin:0 auto 1.8rem;}
+.login-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,8vw,2.6rem);font-weight:800;text-align:center;line-height:1.1;margin-bottom:.4rem;letter-spacing:-.02em;}
 .login-title span{color:var(--gold);}
-.login-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:2.6rem;position:relative;z-index:1;}
-.btn-google{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--b2);color:var(--text);padding:15px 28px;border-radius:100px;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;max-width:300px;justify-content:center;position:relative;z-index:1;}
+.login-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:2.6rem;}
+.btn-google{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--b2);color:var(--text);padding:15px 28px;border-radius:100px;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;max-width:300px;justify-content:center;}
 .btn-google:active{transform:scale(.97);border-color:var(--gold);}
 .btn-google svg{width:20px;height:20px;flex-shrink:0;}
-.login-note{margin-top:1.2rem;font-size:11px;color:var(--text2);text-align:center;position:relative;z-index:1;}
+.login-note{margin-top:1.2rem;font-size:11px;color:var(--text2);text-align:center;}
 
 /* ══ HEADER ══ */
-.header{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem;background:var(--s1);border-bottom:1px solid var(--b0);position:relative;flex-shrink:0;z-index:10;}
+.header{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem;background:rgba(24,24,24,0.6);backdrop-filter:blur(10px);border-bottom:1px solid var(--b0);position:relative;flex-shrink:0;z-index:10;}
 .header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.55;}
 .header-logo-wrap{background:#fff;border-radius:6px;padding:4px 7px;}
 .header-logo-wrap img{width:50px;display:block;pointer-events:none;}
@@ -75,14 +98,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);heigh
 .orb-status.processing{color:var(--warn);font-weight:bold;}
 
 /* Sélecteur de Mode */
-.mode-toggle{display:flex;background:var(--s1);border:1px solid var(--b2);border-radius:100px;padding:4px;margin-top:20px;position:relative;}
+.mode-toggle{display:flex;background:rgba(24,24,24,0.8);backdrop-filter:blur(10px);border:1px solid var(--b2);border-radius:100px;padding:4px;margin-top:20px;position:relative;}
 .mode-option{flex:1;padding:10px 16px;font-size:11px;font-weight:600;font-family:'Syne',sans-serif;color:var(--text2);text-align:center;cursor:pointer;border-radius:100px;transition:all 0.3s;position:relative;z-index:2;display:flex;align-items:center;gap:6px;}
 .mode-option.active{color:#fff;}
 .mode-slider{position:absolute;top:4px;bottom:4px;width:calc(50% - 4px);background:var(--s3);border-radius:100px;transition:transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);z-index:1;}
 .mode-slider.right{transform:translateX(100%);}
 
 /* ══ MODAL AVANCEMENT / HISTORIQUE ══ */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(3px);z-index:100;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity 0.3s;}
 .modal-overlay.active{opacity:1;pointer-events:auto;}
 .modal-content{background:var(--bg);height:85dvh;border-radius:24px 24px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);border-top:1px solid var(--gold-dim);}
 .modal-overlay.active .modal-content{transform:translateY(0);}
@@ -101,7 +124,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);heigh
 
 .modal-body{flex:1;overflow:hidden;display:flex;flex-direction:column;padding-bottom:20px;}
 
-/* Récap champs (défilable horizontalement) */
+/* Récap champs */
 .fields-recap-h{display:flex;gap:8px;padding:16px 20px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--b0);flex-shrink:0;}
 .fields-recap-h::-webkit-scrollbar{display:none;}
 .field-chip{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:10px;white-space:nowrap;flex-shrink:0;}
@@ -130,12 +153,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);heigh
 </head>
 <body>
 
-<script>
-const LOGO_B64="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";
-</script>
-
+<!-- LOGIN -->
 <div id="screen-login" class="screen active">
-  <div class="login-logo-wrap"><img id="login-logo" alt="TALCO LR"></div>
+  <div class="login-logo-wrap">
+    <!-- Utilisation du logo fourni -->
+    <img src="./logo-centre-talco-lr-seul.pdf.png" id="login-logo" alt="TALCO LR">
+  </div>
   <div class="login-divider"></div>
   <h1 class="login-title">Agent<br><span>vocal</span></h1>
   <p class="login-sub">Rapport d'intervention par la voix</p>
@@ -149,9 +172,13 @@ const LOGO_B64="/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoH
   <div id="login-error" style="display:none;margin-top:1rem;padding:10px 16px;background:rgba(224,82,82,.1);border:1px solid var(--danger);border-radius:10px;font-size:12px;color:var(--danger);text-align:center;">⚠ Compte non autorisé</div>
 </div>
 
+<!-- CHAT VOCAL (IMMERSIF) -->
 <div id="screen-chat" class="screen">
   <div class="header">
-    <div class="header-logo-wrap"><img id="header-logo" alt="TALCO LR"></div>
+    <div class="header-logo-wrap">
+      <!-- Utilisation du logo fourni -->
+      <img src="./logo-centre-talco-lr-seul.pdf.png" id="header-logo" alt="TALCO LR">
+    </div>
     <div class="header-right">
       <button class="btn-history" onclick="toggleModal(true)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
@@ -169,6 +196,7 @@ const LOGO_B64="/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoH
         <div class="orb-layer orb-core"></div>
         <div class="orb-layer orb-shine"></div>
         <div class="sending-indicator" id="sending-indicator"></div>
+        <!-- Bouton invisible par dessus l'orbe -->
         <button class="btn-mic-main" id="btn-mic"></button>
       </div>
 
@@ -188,6 +216,7 @@ const LOGO_B64="/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoH
   </div>
 </div>
 
+<!-- MODAL AVANCEMENT ET HISTORIQUE -->
 <div class="modal-overlay" id="history-modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -204,7 +233,9 @@ const LOGO_B64="/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoH
       </div>
     </div>
     <div class="modal-body">
+      <!-- Liste des champs récupérés -->
       <div class="fields-recap-h" id="fields-recap"></div>
+      <!-- Historique bulles texte -->
       <div class="conv-history" id="conv-history"></div>
     </div>
   </div>
@@ -214,8 +245,6 @@ const LOGO_B64="/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoH
 
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
-  const src='data:image/jpeg;base64,'+LOGO_B64;
-  document.querySelectorAll('#login-logo,#header-logo').forEach(i=>i.src=src);
   const saved=loadUserSession();
   if(saved){
     state.user=saved;
@@ -230,7 +259,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 const CONFIG={
   GOOGLE_CLIENT_ID:'303849110460-10rqg6oco2jseasj4ccsh1n0e4btulea.apps.googleusercontent.com',
-  N8N_VOICE_URL:'/api/voice-chat',
+  N8N_VOICE_URL:'https://n8n.talco-lr.com/webhook/talco-voice-chat', /* <-- METS BIEN TON URL WEBHOOK ICI */
   ALLOWED_DOMAIN:'talco-lr.com'
 };
 
@@ -290,7 +319,6 @@ function setMode(mode){
 // ══ GESTION EVENEMENTS MICRO (ORBE) ══
 const micBtn = document.getElementById('btn-mic');
 
-// Pour le mode PTT (Push To Talk)
 micBtn.addEventListener('pointerdown', async (e) => {
   if(state.isProcessing || state.interactionMode !== 'ptt' || state.is_complete) return;
   e.preventDefault();
@@ -305,16 +333,13 @@ micBtn.addEventListener('pointerup', (e) => {
 micBtn.addEventListener('pointercancel', () => { if(state.isListening && state.interactionMode === 'ptt') stopRecording(); });
 micBtn.addEventListener('pointerleave', () => { if(state.isListening && state.interactionMode === 'ptt') stopRecording(); });
 
-// Pour le mode Continu
 micBtn.addEventListener('click', async (e) => {
   if(state.isProcessing || state.interactionMode !== 'continuous' || state.is_complete) return;
   e.preventDefault();
   
-  // Si on écoute déjà, un clic arrête l'enregistrement et envoie
   if(state.isListening) {
     stopRecording();
   } else {
-    // Si l'IA était en train de parler, on lui coupe la parole et on écoute
     if(state.currentAudio) {
       state.currentAudio.pause();
       state.currentAudio = null;
@@ -322,7 +347,6 @@ micBtn.addEventListener('click', async (e) => {
     await startRecording();
   }
 });
-
 
 // ══ AUDIO ENREGISTREMENT ══
 async function startRecording(){
@@ -362,8 +386,7 @@ function blobToBase64(blob){
   return new Promise((res,rej)=>{
     const r=new FileReader();
     r.onload=()=>{
-      // NETTOYAGE FRONTEND : On coupe à la virgule pour n'envoyer que les données pures
-      // Ça évite le bug de Whisper STT dans n8n
+      // NETTOYAGE FRONTEND : On coupe à la virgule
       const base64Data = r.result.split(',');
       res(base64Data);
     };
@@ -499,7 +522,6 @@ function updateProgressUI(){
     recap.appendChild(chip);
   });
 
-  // Mise à jour de la barre
   const pct = Math.round((filledCount / totalFields) * 100);
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('progress-text').textContent = `${filledCount} / ${totalFields} champs complétés`;
