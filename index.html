@@ -510,8 +510,9 @@ async function playAudio(base64){
     if(!base64){resolve();return;}
     try{
       if(state.currentAudio){ state.currentAudio.pause(); state.currentAudio=null; }
-      const raw = base64.replace(/^data:audio\/[^;]+;base64,/,'');
-      const binary = atob(raw);
+      const raw = base64.includes(',') ? base64.split(',')[1] : base64;
+      const cleaned = raw.replace(/\s+/g, '');
+      const binary = atob(cleaned);
       const bytes = new Uint8Array(binary.length);
       for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
 
