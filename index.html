@@ -286,8 +286,39 @@ let state={
 const SESSION_KEY='talco_user_session', SESSION_TTL=7*24*60*60*1000;
 function saveUserSession(user){ localStorage.setItem(SESSION_KEY, JSON.stringify({user, expires:Date.now()+SESSION_TTL})); }
 function loadUserSession(){ try{ const raw=localStorage.getItem(SESSION_KEY); if(!raw)return null; const d=JSON.parse(raw); if(Date.now()>d.expires){localStorage.removeItem(SESSION_KEY);return null;} return d.user; }catch(e){return null;} }
-function handleGoogleCredential(r){ try{ const p=JSON.parse(atob(r.credential.split('.'))); const email=p.email||'',name=p.name||email.split('@'); if(!email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){document.getElementById('login-error').style.display='block';return;} document.getElementById('login-error').style.display='none'; state.user={email,name,initials:name.split(' ').map(s=>s).join('').slice(0,2).toUpperCase()}; saveUserSession(state.user); startSession(); }catch(e){showToast('Erreur de connexion');} }
-function loginFallback(){ const email=prompt('Email :','prenom.nom@talco-lr.com'); if(!email||!email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){document.getElementById('login-error').style.display='block';return;} document.getElementById('login-error').style.display='none'; const name=email.split('@').split('.').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' '); state.user={email,name,initials:name.split(' ').map(s=>s).join('').slice(0,2).toUpperCase()}; saveUserSession(state.user); startSession(); }
+
+// CORRECTION BUG DECONNEXION ICI
+function handleGoogleCredential(r){
+  try{ 
+    const p=JSON.parse(atob(r.credential.split('.'))); 
+    const email=p.email||'',name=p.name||email.split('@'); 
+    if(!email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){
+      document.getElementById('login-error').style.display='block';
+      return;
+    } 
+    document.getElementById('login-error').style.display='none'; 
+    state.user={email,name,initials:name.split(' ').map(s=>s).join('').slice(0,2).toUpperCase()}; 
+    saveUserSession(state.user); 
+    startSession(); 
+  }catch(e){
+    console.error('Erreur lors du décodage Google :', e);
+    showToast('Erreur de connexion');
+  } 
+}
+
+function loginFallback(){ 
+  const email=prompt('Email :','prenom.nom@talco-lr.com'); 
+  if(!email||!email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){
+    document.getElementById('login-error').style.display='block';
+    return;
+  } 
+  document.getElementById('login-error').style.display='none'; 
+  const name=email.split('@').split('.').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' '); 
+  state.user={email,name,initials:name.split(' ').map(s=>s).join('').slice(0,2).toUpperCase()}; 
+  saveUserSession(state.user); 
+  startSession(); 
+}
+
 setTimeout(()=>{if(!window.google)document.getElementById('btn-fallback').style.display='flex';},4000);
 
 function startSession(){
