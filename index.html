@@ -282,9 +282,8 @@ function loadUserSession(){ try{ const raw=localStorage.getItem(SESSION_KEY); if
 // ══ CORRECTION ROBUSTE JWT GOOGLE ══
 function handleGoogleCredential(r) {
   try {
-    // Décodage JWT
     const jwtParts = r.credential.split('.');
-    const base64Url = jwtParts[1]; // ✅ index [1] = payload
+    const base64Url = jwtParts[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(
       window.atob(base64).split('').map(function(c) {
@@ -293,16 +292,29 @@ function handleGoogleCredential(r) {
     );
     const p = JSON.parse(jsonPayload);
     const email = p.email || '';
-
-    // Extraction du nom depuis l'email si p.name absent
     const emailParts = email.split('@');
-    const name = p.name || emailParts[0]; // ✅ index [0] = partie avant @
+    const name = p.name || emailParts[0];
 
     if (!email.endsWith('@' + CONFIG.ALLOWED_DOMAIN)) {
       document.getElementById('login-error').style.display = 'block';
       return;
     }
 
+    document.getElementById('login-error').style.display = 'none';
+    const nameParts = name.split(' ');
+    state.user = {
+      email: email,
+      name: name,
+      initials: nameParts.map(s => s || '').join('').slice(0, 2).toUpperCase()
+    };
+    saveUserSession(state.user);
+    startSession();
+
+  } catch(e) {
+    console.error('Erreur décodage Google :', e);
+    showToast('Erreur de connexion (Voir console)');
+  }
+}
     // ✅ Connexion réussie, continuer...
     console.log('Connecté :', name, email);
 
@@ -338,7 +350,7 @@ function loginFallback(){
   
   // Découpage sécurisé pour le fallback
   const emailParts = email.split('@');
-  const rawName = emailParts.split('.').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' '); // <-- CORRIGÉ : Utilisation stricte de l'index 0
+  const rawName = emailParts[0].split('.').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
   const nameParts = rawName.split(' ');
   
   state.user={
@@ -448,8 +460,8 @@ function blobToBase64(blob){
   return new Promise((res,rej)=>{
     const r=new FileReader();
     r.onload=()=>{
-      const base64Data = r.result.split(','); // Nettoyage de l'entête
-      res(base64Data);
+      const base64Data = r.result.split(',')[1]; // index [1] = la vraie data base64
+    res(base64Data);
     };
     r.onerror=rej;
     r.readAsDataURL(blob);
