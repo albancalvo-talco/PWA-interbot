@@ -283,7 +283,7 @@ function loadUserSession(){ try{ const raw=localStorage.getItem(SESSION_KEY); if
 function handleGoogleCredential(r){
   try{ 
     // Décodage du JWT compatible Base64Url et caractères accentués (UTF-8)
-    const base64Url = r.credential.split('.');
+    const base64Url = r.credential.split('.'); // <-- Le fameux est revenu !
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
@@ -291,7 +291,7 @@ function handleGoogleCredential(r){
 
     const p = JSON.parse(jsonPayload); 
     const email = p.email || '';
-    const name = p.name || email.split('@'); 
+    const name = p.name || email.split('@'); // <-- Le fameux est revenu !
     
     if(!email.endsWith('@' + CONFIG.ALLOWED_DOMAIN)){
       document.getElementById('login-error').style.display='block';
@@ -321,7 +321,7 @@ function loginFallback(){
   } 
   document.getElementById('login-error').style.display='none'; 
   
-  const name = email.split('@').split('.').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' '); 
+  const name = email.split('@').split('.').map(s=>s.charAt(0).toUpperCase()+s.slice(1)).join(' '); // <-- Le fameux est revenu !
   state.user={
     email: email,
     name: name,
@@ -429,7 +429,7 @@ function blobToBase64(blob){
   return new Promise((res,rej)=>{
     const r=new FileReader();
     r.onload=()=>{
-      const base64Data = r.result.split(',');
+      const base64Data = r.result.split(','); // Nettoyage de l'entête
       res(base64Data);
     };
     r.onerror=rej;
