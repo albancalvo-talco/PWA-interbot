@@ -320,31 +320,6 @@ function handleGoogleCredential(r) {
     showToast('Erreur de connexion (Voir console)');
   }
 }
-    // ✅ Connexion réussie, continuer...
-    console.log('Connecté :', name, email);
-
-  } catch(e) {
-    console.error('Erreur décodage Google :', e);
-    document.getElementById('login-error').style.display = 'block';
-  }
-}
-    document.getElementById('login-error').style.display='none'; 
-    
-    const nameParts = name.split(' ');
-    state.user={
-      email: email,
-      name: name,
-      initials: nameParts.map(s=>s||'').join('').slice(0,2).toUpperCase()
-    }; 
-    
-    saveUserSession(state.user); 
-    startSession(); 
-  }catch(e){
-    console.error('Erreur lors du décodage Google :', e);
-    showToast('Erreur de connexion (Voir console)');
-  } 
-}
-
 function loginFallback(){ 
   const email=prompt('Email :','prenom.nom@talco-lr.com'); 
   if(!email || !email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){
