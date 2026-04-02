@@ -8,114 +8,143 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0e0e0e">
 <title>TALCO — Agent Vocal</title>
-<!-- SUPPRIMÉ: <script src="https://accounts.google.com/gsi/client"> — plus besoin, on fait du redirect OAuth2 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --gold:#E8A900;--gold-dim:#9e7200;
-  --bg:#0e0e0e;--s1:#181818;--s2:#222;--s3:#2c2c2c;
-  --b0:rgba(255,255,255,0.05);--b1:rgba(255,255,255,0.09);--b2:rgba(255,255,255,0.14);
-  --text:#EEEAE4;--text2:#6a6860;
+  --gold:#E8A900;--gold-dim:#9e7200;--gold-glow:rgba(232,169,0,.15);
+  --bg:#0a0a0a;--s1:#131313;--s2:#1a1a1a;--s3:#242424;
+  --b0:rgba(255,255,255,0.04);--b1:rgba(255,255,255,0.08);--b2:rgba(255,255,255,0.12);
+  --text:#F0ECE6;--text2:#6a6860;--text3:#4a4840;
   --danger:#e05252;--success:#4ecb7a;--warn:#f5a623;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
-
+html,body{height:100%;overflow:hidden;}
 body{
-  font-family:'Inter',sans-serif;
-  background-color:var(--bg);
-  color:var(--text);
-  height:100dvh;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  position:relative;
+  font-family:'Outfit',sans-serif;background-color:var(--bg);color:var(--text);
+  height:100dvh;display:flex;flex-direction:column;position:relative;
 }
-
-body::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url('./istockphoto-1328094196-612x612.jpg') center/cover no-repeat;
-  opacity: 0.08;
-  filter: grayscale(100%) contrast(120%);
-  z-index: 0;
-  pointer-events: none;
+body::before{
+  content:'';position:absolute;inset:0;
+  background:url('./istockphoto-1328094196-612x612.jpg') center/cover no-repeat;
+  opacity:0.06;filter:grayscale(100%) contrast(120%);z-index:0;pointer-events:none;
 }
 
 .screen{display:none;flex-direction:column;height:100dvh;overflow:hidden;position:relative;z-index:1;}
 .screen.active{display:flex;}
 
-#screen-login{align-items:center;justify-content:center;padding:2rem 1.5rem;gap:0;}
-.login-logo-wrap{background:#fff;border-radius:12px;padding:12px 18px;margin-bottom:2rem;display:inline-block;box-shadow:0 0 0 1px rgba(232,169,0,.2),0 8px 40px rgba(0,0,0,.6);}
+/* ── LOGIN ── */
+#screen-login{align-items:center;justify-content:center;padding:2rem 1.5rem;}
+.login-logo-wrap{background:#fff;border-radius:14px;padding:14px 20px;margin-bottom:2rem;display:inline-block;box-shadow:0 0 0 1px rgba(232,169,0,.15),0 12px 48px rgba(0,0,0,.7);}
 .login-logo-wrap img{width:110px;display:block;pointer-events:none;}
-.login-divider{width:36px;height:3px;background:var(--gold);border-radius:2px;margin:0 auto 1.8rem;}
-.login-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,8vw,2.6rem);font-weight:800;text-align:center;line-height:1.1;margin-bottom:.4rem;letter-spacing:-.02em;}
+.login-divider{width:40px;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-dim));border-radius:2px;margin:0 auto 1.8rem;}
+.login-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,8vw,2.6rem);font-weight:800;text-align:center;line-height:1.1;margin-bottom:.4rem;letter-spacing:-.03em;}
 .login-title span{color:var(--gold);}
-.login-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:2.6rem;}
+.login-sub{font-size:14px;color:var(--text2);text-align:center;margin-bottom:2.6rem;font-weight:300;}
 .btn-google{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--b2);color:var(--text);padding:15px 28px;border-radius:100px;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;max-width:300px;justify-content:center;}
 .btn-google:active{transform:scale(.97);border-color:var(--gold);}
 .btn-google svg{width:20px;height:20px;flex-shrink:0;}
-.login-note{margin-top:1.2rem;font-size:11px;color:var(--text2);text-align:center;}
+.login-note{margin-top:1.2rem;font-size:11px;color:var(--text3);text-align:center;}
+.login-spinner{display:none;flex-direction:column;align-items:center;gap:12px;margin-top:1.5rem;}
+.login-spinner.visible{display:flex;}
+.login-spinner .spinner-ring{width:32px;height:32px;border:3px solid var(--b2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+.login-spinner .spinner-text{font-size:12px;color:var(--text2);}
+#login-error{display:none;margin-top:1rem;padding:10px 16px;background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.3);border-radius:12px;font-size:12px;color:var(--danger);text-align:center;}
 
-.header{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem;background:rgba(24,24,24,0.6);backdrop-filter:blur(10px);border-bottom:1px solid var(--b0);position:relative;flex-shrink:0;z-index:10;}
-.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.55;}
-.header-logo-wrap{background:#fff;border-radius:6px;padding:4px 7px;}
-.header-logo-wrap img{width:50px;display:block;pointer-events:none;}
-.header-right{display:flex;align-items:center;gap:12px;}
-.btn-history{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:6px 10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--gold);cursor:pointer;transition:all .2s;}
-.btn-history:active{background:var(--s3);transform:scale(0.95);}
-.btn-history svg{width:16px;height:16px;}
-.btn-logout{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:6px 10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .2s;}
-.btn-logout:active{background:var(--s3);transform:scale(0.95);}
+/* ── WELCOME ── */
+#screen-welcome{align-items:center;justify-content:center;padding:2rem 1.5rem;}
+.welcome-greeting{font-family:'Syne',sans-serif;font-size:clamp(1.4rem,6vw,2rem);font-weight:700;text-align:center;margin-bottom:.6rem;}
+.welcome-greeting span{color:var(--gold);}
+.welcome-desc{font-size:14px;color:var(--text2);text-align:center;margin-bottom:3rem;max-width:280px;line-height:1.5;font-weight:300;}
+.btn-start{display:flex;align-items:center;gap:10px;background:var(--gold);color:#0a0a0a;padding:16px 40px;border-radius:100px;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;cursor:pointer;border:none;transition:all .25s;box-shadow:0 4px 24px rgba(232,169,0,.3);}
+.btn-start:active{transform:scale(.95);box-shadow:0 2px 12px rgba(232,169,0,.2);}
+.btn-start svg{width:22px;height:22px;}
 
-.chat-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:2rem;}
-.orb-container{display:flex;flex-direction:column;align-items:center;gap:30px;transform:translateY(-20px);}
+/* ── HEADER ── */
+.header{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:rgba(16,16,16,0.7);backdrop-filter:blur(12px);border-bottom:1px solid var(--b0);position:relative;flex-shrink:0;z-index:10;}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4;}
+.header-logo-wrap{background:#fff;border-radius:6px;padding:3px 6px;}
+.header-logo-wrap img{width:44px;display:block;pointer-events:none;}
+.header-right{display:flex;align-items:center;gap:8px;}
+.btn-header{display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:5px 10px;font-family:'Syne',sans-serif;font-size:11px;font-weight:600;color:var(--gold);cursor:pointer;transition:all .2s;}
+.btn-header:active{background:var(--s3);transform:scale(0.95);}
+.btn-header svg{width:14px;height:14px;}
 
-.orb-wrap{position:relative;width:180px;height:180px;flex-shrink:0;}
+/* ── ORB ZONE ── */
+.orb-zone{display:flex;flex-direction:column;align-items:center;padding:14px 1rem 10px;flex-shrink:0;}
+.progress-badge{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.progress-ring{position:relative;width:36px;height:36px;}
+.progress-ring svg{transform:rotate(-90deg);width:36px;height:36px;}
+.progress-ring .ring-bg{fill:none;stroke:var(--s3);stroke-width:3.5;}
+.progress-ring .ring-fill{fill:none;stroke:var(--gold);stroke-width:3.5;stroke-linecap:round;transition:stroke-dashoffset .6s ease;}
+.progress-count{font-family:'DM Mono',monospace;font-size:13px;color:var(--text);letter-spacing:.05em;}
+.progress-count b{color:var(--gold);font-weight:500;}
+.orb-row{display:flex;align-items:center;gap:16px;}
+.orb-wrap{position:relative;width:72px;height:72px;flex-shrink:0;}
 .orb-layer{position:absolute;inset:0;border-radius:50%;pointer-events:none;}
-.orb-bg{background:conic-gradient(from 0deg,rgba(232,169,0,.75),rgba(180,60,80,.55),rgba(90,60,180,.65),rgba(60,120,180,.5),rgba(232,169,0,.75));filter:blur(18px);animation:spin-slow 5s linear infinite;}
-.orb-mid{inset:14px;background:radial-gradient(circle at 40% 35%,rgba(232,169,0,.92),rgba(160,50,80,.7) 45%,rgba(70,50,170,.55) 75%);filter:blur(8px);animation:pulse-mid 2.2s ease-in-out infinite alternate;}
-.orb-core{inset:32px;background:radial-gradient(circle at 42% 38%,rgba(255,222,100,.98),rgba(232,169,0,.85) 45%,rgba(140,40,70,.6) 85%);filter:blur(4px);}
-.orb-shine{inset:0;background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.16),transparent 55%);}
+.orb-bg{background:conic-gradient(from 0deg,rgba(232,169,0,.75),rgba(180,60,80,.55),rgba(90,60,180,.65),rgba(60,120,180,.5),rgba(232,169,0,.75));filter:blur(9px);animation:spin-slow 5s linear infinite;}
+.orb-mid{inset:7px;background:radial-gradient(circle at 40% 35%,rgba(232,169,0,.92),rgba(160,50,80,.7) 45%,rgba(70,50,170,.55) 75%);filter:blur(4px);animation:pulse-mid 2.2s ease-in-out infinite alternate;}
+.orb-core{inset:16px;background:radial-gradient(circle at 42% 38%,rgba(255,222,100,.98),rgba(232,169,0,.85) 45%,rgba(140,40,70,.6) 85%);filter:blur(2px);}
+.orb-shine{inset:0;background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.14),transparent 55%);}
 @keyframes spin-slow{0%{transform:rotate(0);}100%{transform:rotate(360deg);}}
-@keyframes pulse-mid{0%{transform:scale(.92);filter:blur(8px);}100%{transform:scale(1.08);filter:blur(12px);}}
-.orb-bg.idle{animation-duration:7s;filter:blur(18px) saturate(.5);}
-.orb-bg.listening{animation-duration:1.3s;}
+@keyframes pulse-mid{0%{transform:scale(.92);filter:blur(4px);}100%{transform:scale(1.08);filter:blur(6px);}}
+.orb-bg.idle{animation-duration:7s;filter:blur(9px) saturate(.5);}
+.orb-bg.listening{animation-duration:1.2s;filter:blur(9px) saturate(1.2);}
 .orb-bg.speaking{animation-duration:2.5s;}
-.orb-bg.processing{animation-duration:4s;filter:blur(18px) hue-rotate(30deg);}
+.orb-bg.processing{animation-duration:4s;filter:blur(9px) hue-rotate(30deg);}
+.orb-status-text{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;}
+.orb-status-text.listening{color:var(--danger);font-weight:500;}
+.orb-status-text.speaking{color:var(--gold);font-weight:500;}
+.orb-status-text.processing{color:var(--warn);font-weight:500;}
 
-.btn-mic-main{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;background:transparent;border:none;cursor:pointer;z-index:10;outline:none;box-shadow:none;-webkit-tap-highlight-color:transparent;}
+/* ── CHAT ── */
+.chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.chat-messages{flex:1;overflow-y:auto;padding:10px 16px 8px;display:flex;flex-direction:column;gap:8px;user-select:text;scroll-behavior:smooth;}
+.chat-messages::-webkit-scrollbar{width:3px;}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px;}
+.bubble{max-width:88%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.55;animation:bubble-in .25s ease-out;}
+@keyframes bubble-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.bubble.agent{align-self:flex-start;background:var(--s2);border:1px solid var(--b1);border-bottom-left-radius:4px;}
+.bubble.agent .bubble-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:.1em;margin-bottom:4px;text-transform:uppercase;}
+.bubble.user{align-self:flex-end;background:rgba(232,169,0,.1);border:1px solid rgba(232,169,0,.18);border-bottom-right-radius:4px;}
+.bubble.user .bubble-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:.1em;margin-bottom:4px;text-align:right;text-transform:uppercase;}
+.typing-indicator{align-self:flex-start;display:none;padding:10px 16px;margin:0 16px;background:var(--s2);border:1px solid var(--b1);border-radius:14px;border-bottom-left-radius:4px;}
+.typing-indicator.visible{display:flex;gap:4px;align-items:center;}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:.4;animation:typing-bounce 1.2s ease-in-out infinite;}
+.typing-dot:nth-child(2){animation-delay:.15s;}
+.typing-dot:nth-child(3){animation-delay:.3s;}
+@keyframes typing-bounce{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-6px);opacity:1;}}
 
-.orb-status{font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);letter-spacing:.15em;text-transform:uppercase;text-align:center;height:20px;transition:color 0.3s;}
-.orb-status.listening{color:var(--danger);font-weight:bold;}
-.orb-status.speaking{color:var(--gold);font-weight:bold;}
-.orb-status.processing{color:var(--warn);font-weight:bold;}
+/* ── MIC BAR ── */
+.mic-bar{display:flex;align-items:center;gap:12px;padding:10px 16px 14px;background:rgba(16,16,16,0.8);backdrop-filter:blur(12px);border-top:1px solid var(--b0);flex-shrink:0;}
+.mic-bar-hint{flex:1;font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.04em;}
+.btn-mic{width:52px;height:52px;border-radius:50%;border:2px solid var(--gold);background:rgba(232,169,0,.08);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;position:relative;}
+.btn-mic:active{transform:scale(.92);}
+.btn-mic.recording{background:rgba(224,82,82,.15);border-color:var(--danger);animation:mic-pulse 1.5s ease-in-out infinite;}
+@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,82,82,.3);}50%{box-shadow:0 0 0 12px rgba(224,82,82,0);}}
+.btn-mic svg{width:22px;height:22px;color:var(--gold);transition:color .2s;}
+.btn-mic.recording svg{color:var(--danger);}
+.btn-mic.disabled{opacity:.3;pointer-events:none;}
+.btn-mic .icon-mic,.btn-mic .icon-stop{position:absolute;}
+.btn-mic .icon-stop{display:none;}
+.btn-mic.recording .icon-mic{display:none;}
+.btn-mic.recording .icon-stop{display:block;}
 
-.mode-toggle{display:flex;background:rgba(24,24,24,0.8);backdrop-filter:blur(10px);border:1px solid var(--b2);border-radius:100px;padding:4px;margin-top:20px;position:relative;}
-.mode-option{flex:1;padding:10px 16px;font-size:11px;font-weight:600;font-family:'Syne',sans-serif;color:var(--text2);text-align:center;cursor:pointer;border-radius:100px;transition:all 0.3s;position:relative;z-index:2;display:flex;align-items:center;gap:6px;}
-.mode-option.active{color:#fff;}
-.mode-slider{position:absolute;top:4px;bottom:4px;width:calc(50% - 4px);background:var(--s3);border-radius:100px;transition:transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);z-index:1;}
-.mode-slider.right{transform:translateX(100%);}
-
+/* ── MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(3px);z-index:100;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity 0.3s;}
 .modal-overlay.active{opacity:1;pointer-events:auto;}
-.modal-content{background:var(--bg);height:85dvh;border-radius:24px 24px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);border-top:1px solid var(--gold-dim);}
+.modal-content{background:var(--bg);height:85dvh;border-radius:24px 24px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.25,1,0.5,1);border-top:1px solid var(--gold-dim);}
 .modal-overlay.active .modal-content{transform:translateY(0);}
-
-.modal-header{padding:16px 20px;border-bottom:1px solid var(--b1);display:flex;flex-direction:column;gap:12px;position:relative;}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--b1);display:flex;flex-direction:column;gap:12px;}
 .modal-handle{width:40px;height:4px;background:var(--b2);border-radius:2px;margin:0 auto;}
 .modal-title-row{display:flex;justify-content:space-between;align-items:center;}
 .modal-title-row h2{font-family:'Syne',sans-serif;font-size:16px;color:var(--gold);}
 .btn-close{background:transparent;border:none;color:var(--text2);font-size:24px;cursor:pointer;padding:4px;}
-
 .progress-container{width:100%;}
 .progress-text{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);margin-bottom:6px;text-align:right;}
 .progress-bar-bg{height:6px;background:var(--s2);border-radius:3px;overflow:hidden;}
 .progress-bar-fill{height:100%;background:var(--gold);width:0%;transition:width 0.5s ease;}
-
 .modal-body{flex:1;overflow:hidden;display:flex;flex-direction:column;padding-bottom:20px;}
-
 .fields-recap-h{display:flex;gap:8px;padding:16px 20px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--b0);flex-shrink:0;}
 .fields-recap-h::-webkit-scrollbar{display:none;}
 .field-chip{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:10px;white-space:nowrap;flex-shrink:0;}
@@ -124,86 +153,92 @@ body::before {
 .field-chip .fc-dot{width:6px;height:6px;border-radius:50%;background:var(--b2);flex-shrink:0;}
 .field-chip .fc-label{color:var(--text2);}
 .field-chip.done .fc-label{color:var(--success);}
-
-.conv-history{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;user-select:text;}
-.bubble{max-width:85%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.5;}
-.bubble.agent{align-self:flex-start;background:var(--s2);border:1px solid var(--b1);border-bottom-left-radius:4px;color:var(--text);}
-.bubble.agent .bubble-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:.1em;margin-bottom:6px;text-transform:uppercase;}
-.bubble.user{align-self:flex-end;background:rgba(232,169,0,.12);border:1px solid rgba(232,169,0,.2);border-bottom-right-radius:4px;color:var(--text);}
-.bubble.user .bubble-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:.1em;margin-bottom:6px;text-align:right;text-transform:uppercase;}
-
-.sending-indicator{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border:3px solid var(--b2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;display:none;z-index:10;pointer-events:none;}
-.sending-indicator.visible{display:block;}
-@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg);}}
+.conv-history-modal{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;user-select:text;}
 
 .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--b2);border-radius:100px;padding:10px 20px;font-size:12px;color:var(--text);white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;}
 .toast.visible{opacity:1;}
-
-/* Spinner login pendant le redirect retour */
-.login-spinner{display:none;flex-direction:column;align-items:center;gap:12px;margin-top:1.5rem;}
-.login-spinner.visible{display:flex;}
-.login-spinner .spinner-ring{width:32px;height:32px;border:3px solid var(--b2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
-.login-spinner .spinner-text{font-size:12px;color:var(--text2);}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="screen-login" class="screen active">
-  <div class="login-logo-wrap">
-    <img src="./logo-centre-talco-lr-seul.pdf.png" id="login-logo" alt="TALCO LR">
-  </div>
+  <div class="login-logo-wrap"><img src="./logo-centre-talco-lr-seul.pdf.png" alt="TALCO LR"></div>
   <div class="login-divider"></div>
   <h1 class="login-title">Agent<br><span>vocal</span></h1>
   <p class="login-sub">Rapport d'intervention par la voix</p>
-
-  <!-- FIX #1 : OAuth2 redirect au lieu de One Tap popup -->
   <button class="btn-google" id="btn-google-login" onclick="loginWithGoogleRedirect()">
     <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
     Se connecter avec Google
   </button>
-
   <div class="login-spinner" id="login-spinner">
-    <div class="spinner-ring"></div>
-    <div class="spinner-text">Connexion en cours...</div>
+    <div class="spinner-ring" style="width:32px;height:32px;border:3px solid var(--b2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;"></div>
+    <div style="font-size:12px;color:var(--text2);">Connexion en cours...</div>
   </div>
-
   <p class="login-note">Réservé aux comptes @talco-lr.com</p>
-  <div id="login-error" style="display:none;margin-top:1rem;padding:10px 16px;background:rgba(224,82,82,.1);border:1px solid var(--danger);border-radius:10px;font-size:12px;color:var(--danger);text-align:center;">⚠ Compte non autorisé</div>
+  <div id="login-error">⚠ Compte non autorisé</div>
 </div>
 
-<!-- CHAT VOCAL -->
+<!-- WELCOME -->
+<div id="screen-welcome" class="screen">
+  <div class="welcome-greeting">Bonjour <span id="welcome-name">!</span></div>
+  <p class="welcome-desc">Prêt à remplir votre rapport d'intervention ? L'agent vocal TALCO-IA va vous guider.</p>
+  <button class="btn-start" onclick="beginConversation()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+    Commencer
+  </button>
+</div>
+
+<!-- CHAT -->
 <div id="screen-chat" class="screen">
   <div class="header">
-    <div class="header-logo-wrap">
-      <img src="./logo-centre-talco-lr-seul.pdf.png" id="header-logo" alt="TALCO LR">
-    </div>
+    <div class="header-logo-wrap"><img src="./logo-centre-talco-lr-seul.pdf.png" alt="TALCO LR"></div>
     <div class="header-right">
-      <button class="btn-history" onclick="toggleModal(true)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-        Avancement
+      <button class="btn-header" onclick="toggleModal(true)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Détails
       </button>
-      <button class="btn-logout" onclick="logout()">Déconnexion</button>
+      <button class="btn-header" style="color:var(--text2);" onclick="logout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     </div>
   </div>
 
-  <div class="chat-body">
-    <div class="orb-container">
+  <div class="orb-zone">
+    <div class="progress-badge">
+      <div class="progress-ring">
+        <svg viewBox="0 0 36 36">
+          <circle class="ring-bg" cx="18" cy="18" r="15.5"/>
+          <circle class="ring-fill" id="progress-ring-fill" cx="18" cy="18" r="15.5" stroke-dasharray="97.4" stroke-dashoffset="97.4"/>
+        </svg>
+      </div>
+      <div class="progress-count"><b id="progress-filled">0</b> / <span id="progress-total">16</span></div>
+    </div>
+    <div class="orb-row">
       <div class="orb-wrap">
         <div class="orb-layer orb-bg idle" id="orb-bg"></div>
         <div class="orb-layer orb-mid"></div>
         <div class="orb-layer orb-core"></div>
         <div class="orb-layer orb-shine"></div>
-        <div class="sending-indicator" id="sending-indicator"></div>
-        <button class="btn-mic-main" id="btn-mic"></button>
       </div>
-      <div class="orb-status" id="orb-status">Appuie pour parler</div>
-      <div class="mode-toggle">
-        <div class="mode-slider" id="mode-slider"></div>
-        <div class="mode-option active" id="mode-ptt" onclick="setMode('ptt')">📻 Poussoir</div>
-        <div class="mode-option" id="mode-cont" onclick="setMode('continuous')">🔄 Continu</div>
-      </div>
+      <div class="orb-status-text" id="orb-status">En attente</div>
     </div>
+  </div>
+
+  <div class="chat-area">
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="typing-indicator" id="typing-indicator">
+      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+    </div>
+  </div>
+
+  <div class="mic-bar">
+    <div class="mic-bar-hint" id="mic-hint">Appuyez pour parler</div>
+    <button class="btn-mic" id="btn-mic">
+      <svg class="icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      <svg class="icon-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+    </button>
   </div>
 </div>
 
@@ -217,13 +252,13 @@ body::before {
         <button class="btn-close" onclick="toggleModal(false)">&times;</button>
       </div>
       <div class="progress-container">
-        <div class="progress-text" id="progress-text">0 / 16 champs complétés</div>
-        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        <div class="progress-text" id="modal-progress-text">0 / 16 champs complétés</div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="modal-progress-fill"></div></div>
       </div>
     </div>
     <div class="modal-body">
       <div class="fields-recap-h" id="fields-recap"></div>
-      <div class="conv-history" id="conv-history"></div>
+      <div class="conv-history-modal" id="conv-history-modal"></div>
     </div>
   </div>
 </div>
@@ -231,234 +266,73 @@ body::before {
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════════
-//  CONFIG
-// ══════════════════════════════════════════════════════════════
 const CONFIG={
   GOOGLE_CLIENT_ID:'303849110460-10rqg6oco2jseasj4ccsh1n0e4btulea.apps.googleusercontent.com',
   N8N_VOICE_URL:'https://n8n.talco-lr.com/webhook/talco-voice-chat',
   ALLOWED_DOMAIN:'talco-lr.com',
-  // L'URL de redirect = l'URL de la PWA sur GitHub Pages
-  REDIRECT_URI: window.location.origin + window.location.pathname
+  REDIRECT_URI:window.location.origin+window.location.pathname
 };
-
-const FIELD_LABELS={
-  nom_client:'Client',numero_affaire:'Affaire',
-  date_debut:'Début',date_fin:'Fin',
-  heure_debut:'H.début',heure_fin:'H.fin',
-  redacteur:'Rédacteur',techniciens_presents:'Techniciens',
-  clients_presents:'Clients site',type_intervention:'Type',
-  designation_precise:'Description',raison_intervention:'Raison',
-  chantier_termine:'Terminé',si_non_details:'Reste à faire',
-  difficultes:'Difficultés',points_attention:'Points attention'
-};
+const FIELD_LABELS={nom_client:'Client',numero_affaire:'Affaire',date_debut:'Début',date_fin:'Fin',heure_debut:'H.début',heure_fin:'H.fin',redacteur:'Rédacteur',techniciens_presents:'Techniciens',clients_presents:'Clients site',type_intervention:'Type',designation_precise:'Description',raison_intervention:'Raison',chantier_termine:'Terminé',si_non_details:'Reste à faire',difficultes:'Difficultés',points_attention:'Points attention'};
 const FIELD_ORDER=Object.keys(FIELD_LABELS);
+let state={user:null,session_id:null,history:[],responses:{},is_complete:false,isListening:false,isProcessing:false,mediaRecorder:null,audioChunks:[],currentAudioSource:null};
 
-let state={
-  user:null,session_id:null,history:[],responses:{},
-  is_complete:false,isListening:false,isProcessing:false,
-  mediaRecorder:null,audioChunks:[],currentAudioSource:null,
-  interactionMode:'ptt'
-};
-
-// ══════════════════════════════════════════════════════════════
-//  SESSION PERSISTENCE
-// ══════════════════════════════════════════════════════════════
+// Session
 const SESSION_KEY='talco_user_session',SESSION_TTL=7*24*60*60*1000;
-function saveUserSession(user){localStorage.setItem(SESSION_KEY,JSON.stringify({user,expires:Date.now()+SESSION_TTL}));}
-function loadUserSession(){try{const raw=localStorage.getItem(SESSION_KEY);if(!raw)return null;const d=JSON.parse(raw);if(Date.now()>d.expires){localStorage.removeItem(SESSION_KEY);return null;}return d.user;}catch(e){return null;}}
+function saveUserSession(u){localStorage.setItem(SESSION_KEY,JSON.stringify({user:u,expires:Date.now()+SESSION_TTL}));}
+function loadUserSession(){try{const r=localStorage.getItem(SESSION_KEY);if(!r)return null;const d=JSON.parse(r);if(Date.now()>d.expires){localStorage.removeItem(SESSION_KEY);return null;}return d.user;}catch(e){return null;}}
 
-// ══════════════════════════════════════════════════════════════
-//  FIX #1 — GOOGLE OAuth2 REDIRECT FLOW (plus de popup!)
-// ══════════════════════════════════════════════════════════════
-
-/**
- * Lance la redirection vers Google OAuth2.
- * Implicit flow : on reçoit un access_token dans le hash fragment au retour.
- * Aucune popup, aucun postMessage, compatible COOP GitHub Pages.
- */
+// OAuth2 redirect
 function loginWithGoogleRedirect(){
-  // Générer un state anti-CSRF et le stocker
-  const oauthState = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-  sessionStorage.setItem('oauth_state', oauthState);
-
-  const params = new URLSearchParams({
-    client_id: CONFIG.GOOGLE_CLIENT_ID,
-    redirect_uri: CONFIG.REDIRECT_URI,
-    response_type: 'token',
-    scope: 'openid email profile',
-    state: oauthState,
-    prompt: 'select_account',
-    // Restreindre au domaine talco-lr.com
-    hd: CONFIG.ALLOWED_DOMAIN
-  });
-
-  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+  const s=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2);
+  sessionStorage.setItem('oauth_state',s);
+  const p=new URLSearchParams({client_id:CONFIG.GOOGLE_CLIENT_ID,redirect_uri:CONFIG.REDIRECT_URI,response_type:'token',scope:'openid email profile',state:s,prompt:'select_account',hd:CONFIG.ALLOWED_DOMAIN});
+  window.location.href='https://accounts.google.com/o/oauth2/v2/auth?'+p.toString();
 }
-
-/**
- * Au chargement de la page, vérifier si on revient d'un redirect OAuth2.
- * Le hash contient : #access_token=...&token_type=Bearer&state=...
- */
 function handleOAuthRedirect(){
-  const hash = window.location.hash.substring(1);
-  if(!hash || !hash.includes('access_token')) return false;
-
-  // Parser les params du hash
-  const params = new URLSearchParams(hash);
-  const accessToken = params.get('access_token');
-  const returnedState = params.get('state');
-  const savedState = sessionStorage.getItem('oauth_state');
-
-  // Nettoyer le hash de l'URL (esthétique)
-  history.replaceState(null, '', window.location.pathname);
-  sessionStorage.removeItem('oauth_state');
-
-  // Vérifier le state anti-CSRF
-  if(!returnedState || returnedState !== savedState){
-    console.error('OAuth state mismatch');
-    showLoginError('Erreur de sécurité (state mismatch). Réessayez.');
-    return true; // On a bien traité un redirect, même en erreur
-  }
-
-  if(!accessToken){
-    showLoginError('Token manquant. Réessayez.');
-    return true;
-  }
-
-  // Montrer le spinner pendant qu'on récupère le profil
-  document.getElementById('btn-google-login').style.display = 'none';
+  const h=window.location.hash.substring(1);if(!h||!h.includes('access_token'))return false;
+  const p=new URLSearchParams(h),token=p.get('access_token'),rs=p.get('state'),ss=sessionStorage.getItem('oauth_state');
+  history.replaceState(null,'',window.location.pathname);sessionStorage.removeItem('oauth_state');
+  if(!rs||rs!==ss){showLoginError('Erreur de sécurité. Réessayez.');return true;}
+  if(!token){showLoginError('Token manquant.');return true;}
+  document.getElementById('btn-google-login').style.display='none';
   document.getElementById('login-spinner').classList.add('visible');
-
-  // Appeler l'API Google userinfo avec l'access_token
-  fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-    headers: { 'Authorization': 'Bearer ' + accessToken }
-  })
-  .then(r => {
-    if(!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
-  })
-  .then(profile => {
-    const email = profile.email || '';
-    const name = profile.name || email.split('@')[0];
-
-    // Vérifier le domaine
-    if(!email.endsWith('@' + CONFIG.ALLOWED_DOMAIN)){
-      showLoginError('Compte non autorisé. Utilisez un compte @' + CONFIG.ALLOWED_DOMAIN);
-      document.getElementById('btn-google-login').style.display = 'flex';
-      document.getElementById('login-spinner').classList.remove('visible');
-      return;
-    }
-
-    const nameParts = name.split(' ');
-    state.user = {
-      email,
-      name,
-      initials: nameParts.map(s => (s[0]||'')).join('').slice(0,2).toUpperCase()
-    };
-    saveUserSession(state.user);
-    startSession();
-  })
-  .catch(e => {
-    console.error('Erreur profil Google:', e);
-    showLoginError('Impossible de récupérer le profil. Réessayez.');
-    document.getElementById('btn-google-login').style.display = 'flex';
-    document.getElementById('login-spinner').classList.remove('visible');
-  });
-
+  fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{'Authorization':'Bearer '+token}})
+  .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(pr=>{
+    const email=pr.email||'',name=pr.name||email.split('@')[0];
+    if(!email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){showLoginError('Compte non autorisé.');document.getElementById('btn-google-login').style.display='flex';document.getElementById('login-spinner').classList.remove('visible');return;}
+    state.user={email,name,initials:name.split(' ').map(s=>(s[0]||'')).join('').slice(0,2).toUpperCase()};
+    saveUserSession(state.user);goToWelcome();
+  }).catch(e=>{showLoginError('Erreur. Réessayez.');document.getElementById('btn-google-login').style.display='flex';document.getElementById('login-spinner').classList.remove('visible');});
   return true;
 }
+function showLoginError(m){const e=document.getElementById('login-error');e.textContent='⚠ '+m;e.style.display='block';}
+function logout(){localStorage.removeItem(SESSION_KEY);state.user=null;state.session_id=null;showScreen('login');document.getElementById('btn-google-login').style.display='flex';document.getElementById('login-spinner').classList.remove('visible');document.getElementById('login-error').style.display='none';}
 
-function showLoginError(msg){
-  const el = document.getElementById('login-error');
-  el.textContent = '⚠ ' + msg;
-  el.style.display = 'block';
-}
-
-function logout(){
-  localStorage.removeItem(SESSION_KEY);
-  state.user = null;
-  state.session_id = null;
-  showScreen('login');
-  document.getElementById('btn-google-login').style.display = 'flex';
-  document.getElementById('login-spinner').classList.remove('visible');
-  document.getElementById('login-error').style.display = 'none';
-}
-
-// ══════════════════════════════════════════════════════════════
-//  INIT — Ordre de priorité : redirect OAuth > session sauvée > écran login
-// ══════════════════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
-  // 1) Vérifier si on revient d'un redirect Google
-  const handledRedirect = handleOAuthRedirect();
-
-  // 2) Si pas de redirect, vérifier la session sauvée
-  if(!handledRedirect){
-    const saved = loadUserSession();
-    if(saved){
-      state.user = saved;
-      startSession();
-    }
-  }
-
-  // Fermer modal au clic sur overlay
-  document.getElementById('history-modal').addEventListener('click', (e) => {
-    if(e.target === document.getElementById('history-modal')) toggleModal(false);
-  });
-});
-
-// ══════════════════════════════════════════════════════════════
-//  SESSION & UI
-// ══════════════════════════════════════════════════════════════
-function startSession(){
+// Welcome → Chat
+function goToWelcome(){document.getElementById('welcome-name').textContent=state.user.name.split(' ')[0]+' !';showScreen('welcome');}
+function beginConversation(){
   state.session_id=`session_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
   state.history=[];state.responses={};state.is_complete=false;
-  document.getElementById('conv-history').innerHTML='';
-  document.getElementById('btn-mic').style.pointerEvents='auto';
-  updateProgressUI();
-  showScreen('chat');
+  document.getElementById('chat-messages').innerHTML='';
+  document.getElementById('conv-history-modal').innerHTML='';
+  updateProgressUI();showScreen('chat');
   sendToAgent(null,'__init__');
 }
 
-function toggleModal(show){
-  if(show)document.getElementById('history-modal').classList.add('active');
-  else document.getElementById('history-modal').classList.remove('active');
-}
+// Init
+window.addEventListener('DOMContentLoaded',()=>{
+  const handled=handleOAuthRedirect();
+  if(!handled){const saved=loadUserSession();if(saved){state.user=saved;goToWelcome();}}
+  document.getElementById('history-modal').addEventListener('click',e=>{if(e.target===document.getElementById('history-modal'))toggleModal(false);});
+});
 
-function setMode(mode){
-  state.interactionMode=mode;
-  document.getElementById('mode-ptt').classList.toggle('active',mode==='ptt');
-  document.getElementById('mode-cont').classList.toggle('active',mode==='continuous');
-  document.getElementById('mode-slider').classList.toggle('right',mode==='continuous');
-  if(!state.isProcessing&&!state.isListening&&!state.currentAudioSource){
-    document.getElementById('orb-status').textContent=mode==='ptt'?'Maintiens pour parler':'Tape pour parler';
-  }
-}
-
-// ══════════════════════════════════════════════════════════════
-//  MICRO / ENREGISTREMENT
-// ══════════════════════════════════════════════════════════════
+// ── Recording : tap to talk / tap to stop ──
 const micBtn=document.getElementById('btn-mic');
-micBtn.addEventListener('pointerdown',async(e)=>{
-  if(state.isProcessing||state.interactionMode!=='ptt'||state.is_complete)return;
-  e.preventDefault();
-  await startRecording();
-});
-micBtn.addEventListener('pointerup',(e)=>{
-  if(state.interactionMode!=='ptt'||!state.isListening)return;
-  e.preventDefault();
-  stopRecording();
-});
-micBtn.addEventListener('pointercancel',()=>{if(state.isListening&&state.interactionMode==='ptt')stopRecording();});
-micBtn.addEventListener('pointerleave',()=>{if(state.isListening&&state.interactionMode==='ptt')stopRecording();});
-micBtn.addEventListener('click',async(e)=>{
-  if(state.isProcessing||state.interactionMode!=='continuous'||state.is_complete)return;
-  e.preventDefault();
+micBtn.addEventListener('click',async e=>{
+  e.preventDefault();if(state.isProcessing||state.is_complete)return;
   if(state.isListening){stopRecording();}
-  else{
-    stopCurrentAudio();
-    await startRecording();
-  }
+  else{stopCurrentAudio();await startRecording();}
 });
 
 async function startRecording(){
@@ -467,216 +341,97 @@ async function startRecording(){
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
     state.audioChunks=[];
     state.mediaRecorder=new MediaRecorder(stream,{mimeType:'audio/webm'});
-    state.mediaRecorder.ondataavailable=(e)=>{if(e.data.size>0)state.audioChunks.push(e.data);};
+    state.mediaRecorder.ondataavailable=e=>{if(e.data.size>0)state.audioChunks.push(e.data);};
     state.mediaRecorder.onstop=async()=>{
       stream.getTracks().forEach(t=>t.stop());
       const blob=new Blob(state.audioChunks,{type:'audio/webm'});
-      const b64=await blobToBase64(blob);
-      sendToAgent(b64,null);
+      sendToAgent(await blobToBase64(blob),null);
     };
-    state.mediaRecorder.start();
-    state.isListening=true;
-    setOrbState('listening');
-    document.getElementById('orb-status').textContent='Écoute...';
-    document.getElementById('orb-status').className='orb-status listening';
+    state.mediaRecorder.start();state.isListening=true;
+    micBtn.classList.add('recording');setOrbState('listening');
+    setStatus('Écoute...','listening');
+    document.getElementById('mic-hint').textContent='Appuyez pour envoyer';
   }catch(e){showToast('Micro non disponible');}
 }
-
 function stopRecording(){
   if(state.mediaRecorder&&state.isListening){
-    state.mediaRecorder.stop();
-    state.isListening=false;
-    setOrbState('processing');
-    document.getElementById('orb-status').textContent='Analyse...';
-    document.getElementById('orb-status').className='orb-status processing';
+    state.mediaRecorder.stop();state.isListening=false;
+    micBtn.classList.remove('recording');setOrbState('processing');
+    setStatus('Analyse...','processing');
+    document.getElementById('mic-hint').textContent='Traitement...';
   }
 }
+function blobToBase64(b){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(b);});}
 
-function blobToBase64(blob){
-  return new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=()=>{res(r.result.split(',')[1]);};
-    r.onerror=rej;
-    r.readAsDataURL(blob);
-  });
-}
-
-// ══════════════════════════════════════════════════════════════
-//  ENVOI AU SERVEUR n8n
-// ══════════════════════════════════════════════════════════════
+// ── Send to n8n ──
 async function sendToAgent(audioBase64,textInput){
-  if(state.isProcessing)return;
-  state.isProcessing=true;
-  document.getElementById('sending-indicator').classList.add('visible');
-
+  if(state.isProcessing)return;state.isProcessing=true;
+  micBtn.classList.add('disabled');
+  document.getElementById('typing-indicator').classList.add('visible');
   try{
-    const payload={
-      session_id:state.session_id,sender_email:state.user.email,sender_name:state.user.name,
-      history:state.history,responses:state.responses
-    };
+    const payload={session_id:state.session_id,sender_email:state.user.email,sender_name:state.user.name,history:state.history,responses:state.responses};
     if(audioBase64)payload.audio_base64=audioBase64;
     if(textInput==='__init__')payload.text_input='__init__';
-
     const resp=await fetch(CONFIG.N8N_VOICE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     const data=await resp.json();
-
     state.history=data.history||state.history;
     state.responses={...state.responses,...(data.responses||{})};
     state.is_complete=data.is_complete||false;
-
-    if(audioBase64){
-      const transcription = data.user_text && data.user_text !== '__init__' ? '🎤 '+data.user_text : '🎤 Message vocal';
-      addBubble('user', transcription);
-    }
-
+    if(audioBase64){addBubble('user','🎤 '+(data.user_text&&data.user_text!=='__init__'?data.user_text:'Message vocal'));}
     if(data.speech)addBubble('agent',data.speech);
     updateProgressUI();
-
-    if(data.audio_base64 && textInput !== '__init__'){
-      await playAudio(data.audio_base64);
-    }
-
-    if(state.is_complete){
-      setOrbState('idle');
-      document.getElementById('orb-status').textContent='Rapport complet ✓';
-      document.getElementById('orb-status').className='orb-status';
-      document.getElementById('btn-mic').style.pointerEvents='none';
-    }
-  }catch(e){
-    addBubble('agent','Erreur de communication avec le serveur.');
-    showToast('Erreur : '+e.message);
+    if(data.audio_base64)await playAudio(data.audio_base64);
+    if(state.is_complete){setOrbState('idle');setStatus('Rapport complet ✓','');micBtn.classList.add('disabled');document.getElementById('mic-hint').textContent='Rapport terminé';}
+  }catch(e){addBubble('agent','Erreur de communication avec le serveur.');showToast('Erreur : '+e.message);
   }finally{
-    state.isProcessing=false;
-    document.getElementById('sending-indicator').classList.remove('visible');
-    if(!state.is_complete&&!state.currentAudioSource){
-      setOrbState('idle');
-      document.getElementById('orb-status').textContent=state.interactionMode==='ptt'?'Maintiens pour parler':'Tape pour parler';
-      document.getElementById('orb-status').className='orb-status';
-    }
+    state.isProcessing=false;document.getElementById('typing-indicator').classList.remove('visible');
+    if(!state.is_complete){micBtn.classList.remove('disabled');setOrbState('idle');setStatus('En attente','');document.getElementById('mic-hint').textContent='Appuyez pour parler';}
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  FIX #2 — LECTURE AUDIO TTS via AudioContext (pas new Audio)
-//
-//  Pourquoi : new Audio('data:audio/mpeg;base64,...') provoque
-//  "NotSupportedError: no supported source" sur Safari/iOS.
-//  
-//  Solution : on décode le base64 → ArrayBuffer → decodeAudioData
-//  → AudioBufferSourceNode. Fonctionne partout.
-// ══════════════════════════════════════════════════════════════
-let audioCtx = null;
-
-function ensureAudioContext(){
-  if(!audioCtx){
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if(audioCtx.state === 'suspended'){
-    audioCtx.resume();
-  }
-}
-
-function stopCurrentAudio(){
-  if(state.currentAudioSource){
-    try{ state.currentAudioSource.stop(); }catch(e){}
-    state.currentAudioSource = null;
-  }
-}
-
-/**
- * Décode un base64 MP3 et le joue via Web Audio API.
- * Compatible Safari, Chrome, Firefox, iOS, Android.
- */
+// ── Audio via AudioContext ──
+let audioCtx=null;
+function ensureAudioContext(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();}
+function stopCurrentAudio(){if(state.currentAudioSource){try{state.currentAudioSource.stop();}catch(e){}state.currentAudioSource=null;}}
 async function playAudio(base64){
-  return new Promise(async (resolve) => {
-    if(!base64){ resolve(); return; }
-
+  return new Promise(async resolve=>{
+    if(!base64||base64.length<100){resolve();return;}
     try{
-      stopCurrentAudio();
-      ensureAudioContext();
-
-      // 1) Base64 → ArrayBuffer
-      const raw = base64.startsWith('data:') ? base64.split(',')[1] : base64;
-      const binaryString = atob(raw);
-      const len = binaryString.length;
-      const bytes = new Uint8Array(len);
-      for(let i = 0; i < len; i++){
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      // 2) Décoder l'audio MP3 → AudioBuffer
-      const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer.slice(0));
-
-      // 3) Créer un source node et jouer
-      const source = audioCtx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioCtx.destination);
-
-      setOrbState('speaking');
-      document.getElementById('orb-status').textContent = 'TALCO-IA parle...';
-      document.getElementById('orb-status').className = 'orb-status speaking';
-
-      source.onended = () => {
-        state.currentAudioSource = null;
-        resolve();
-        if(!state.is_complete && state.interactionMode === 'continuous'){
-          setTimeout(() => {
-            if(!state.isListening && !state.isProcessing) startRecording();
-          }, 600);
-        } else if(!state.is_complete){
-          setOrbState('idle');
-          document.getElementById('orb-status').textContent = 'Maintiens pour parler';
-          document.getElementById('orb-status').className = 'orb-status';
-        }
-      };
-
-      state.currentAudioSource = source;
-      source.start(0);
-
-    }catch(e){
-      console.error('Erreur playAudio:', e);
-      showToast('Erreur lecture audio');
-      state.currentAudioSource = null;
-      resolve();
-    }
+      stopCurrentAudio();ensureAudioContext();
+      const raw=base64.includes(',')?base64.split(',')[1]:base64;
+      const bin=atob(raw);const bytes=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+      const buf=await audioCtx.decodeAudioData(bytes.buffer.slice(0));
+      const src=audioCtx.createBufferSource();src.buffer=buf;src.connect(audioCtx.destination);
+      setOrbState('speaking');setStatus('TALCO-IA parle...','speaking');
+      src.onended=()=>{state.currentAudioSource=null;resolve();};
+      state.currentAudioSource=src;src.start(0);
+    }catch(e){console.error('Erreur playAudio:',e);state.currentAudioSource=null;resolve();}
   });
 }
 
-// ══════════════════════════════════════════════════════════════
-//  UI HELPERS
-// ══════════════════════════════════════════════════════════════
+// ── UI ──
 function addBubble(role,text){
-  const hist=document.getElementById('conv-history');
-  const div=document.createElement('div');
-  div.className='bubble '+role;
-  const label=role==='agent'?'TALCO-IA':'Vous';
-  div.innerHTML=`<div class="bubble-label">${label}</div>${escHtml(text)}`;
-  hist.appendChild(div);
-  hist.scrollTop=hist.scrollHeight;
+  const mk=()=>{const d=document.createElement('div');d.className='bubble '+role;d.innerHTML=`<div class="bubble-label">${role==='agent'?'TALCO-IA':'Vous'}</div>${escHtml(text)}`;return d;};
+  const c=document.getElementById('chat-messages');c.appendChild(mk());c.scrollTop=c.scrollHeight;
+  const m=document.getElementById('conv-history-modal');m.appendChild(mk());m.scrollTop=m.scrollHeight;
 }
-
 function updateProgressUI(){
-  const recap=document.getElementById('fields-recap');
-  recap.innerHTML='';
-  let filledCount=0;
-  const totalFields=FIELD_ORDER.length;
-  FIELD_ORDER.forEach(key=>{
-    const val=state.responses[key];
-    if(val)filledCount++;
-    const chip=document.createElement('div');
-    chip.className='field-chip'+(val?' done':'');
-    chip.innerHTML=`<div class="fc-dot"></div><span class="fc-label">${FIELD_LABELS[key]}${val?': '+escHtml(val):''}</span>`;
-    recap.appendChild(chip);
-  });
-  const pct=Math.round((filledCount/totalFields)*100);
-  document.getElementById('progress-fill').style.width=pct+'%';
-  document.getElementById('progress-text').textContent=`${filledCount} / ${totalFields} champs complétés`;
+  const recap=document.getElementById('fields-recap');recap.innerHTML='';let filled=0;
+  FIELD_ORDER.forEach(k=>{const v=state.responses[k];if(v)filled++;const c=document.createElement('div');c.className='field-chip'+(v?' done':'');c.innerHTML=`<div class="fc-dot"></div><span class="fc-label">${FIELD_LABELS[k]}${v?': '+escHtml(v):''}</span>`;recap.appendChild(c);});
+  const total=FIELD_ORDER.length,pct=Math.round((filled/total)*100),circ=97.4;
+  document.getElementById('progress-ring-fill').style.strokeDashoffset=circ-(circ*pct/100);
+  document.getElementById('progress-filled').textContent=filled;
+  document.getElementById('progress-total').textContent=total;
+  document.getElementById('modal-progress-fill').style.width=pct+'%';
+  document.getElementById('modal-progress-text').textContent=`${filled} / ${total} champs complétés`;
 }
-
 function setOrbState(s){document.getElementById('orb-bg').className='orb-layer orb-bg '+s;}
+function setStatus(t,c){const e=document.getElementById('orb-status');e.textContent=t;e.className='orb-status-text'+(c?' '+c:'');}
 function escHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function showScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');}
+function toggleModal(s){document.getElementById('history-modal').classList.toggle('active',s);}
 function showToast(msg,d=3000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('visible');setTimeout(()=>t.classList.remove('visible'),d);}
 </script>
 </body>
