@@ -1449,32 +1449,8 @@ async function sendToAgent(audioBase64, textInput, retryCount = 0) {
       signal: controller.signal
     });
     
-    // Annuler le timeout si la requête a réussi
-     } catch (e) {
     clearTimeout(timeoutId);
-    console.error('Erreur sendToAgent:', e);
     
-    // Retry automatique pour les erreurs réseau/timeout
-    if (retryCount < MAX_RETRIES && (e.name === 'AbortError' || e.message.includes('fetch') || e.message.includes('network'))) {
-      console.log('🔄 Retry ' + (retryCount + 1) + '/' + MAX_RETRIES);
-      setStatus('Reconnexion...', 'processing');
-      await new Promise(r => setTimeout(r, 1000));
-      return sendToAgent(audioBase64, textInput, retryCount + 1);
-    }
-    
-    // Échec définitif après les retries
-    if (e.name === 'AbortError') {
-      showToast('Timeout - Le serveur met trop de temps. Réessaie.', 4000);
-      setStatus('Timeout', '');
-    } else {
-      showToast('Erreur: ' + e.message);
-      setStatus('Erreur', '');
-    }
-    
-    setOrbState('idle');
-  }
-
-      
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     
     const data = await resp.json();
@@ -1528,12 +1504,18 @@ async function sendToAgent(audioBase64, textInput, retryCount = 0) {
     }
     
   } catch (e) {
-    // Annuler le timeout en cas d'erreur aussi
     clearTimeout(timeoutId);
-    
     console.error('Erreur sendToAgent:', e);
     
-    // Message d'erreur adapté
+    // Retry automatique pour les erreurs réseau/timeout
+    if (retryCount < MAX_RETRIES && (e.name === 'AbortError' || e.message.includes('fetch') || e.message.includes('network'))) {
+      console.log('🔄 Retry ' + (retryCount + 1) + '/' + MAX_RETRIES);
+      setStatus('Reconnexion...', 'processing');
+      await new Promise(r => setTimeout(r, 1000));
+      return sendToAgent(audioBase64, textInput, retryCount + 1);
+    }
+    
+    // Échec définitif
     if (e.name === 'AbortError') {
       showToast('Timeout - Le serveur met trop de temps. Réessaie.', 4000);
       setStatus('Timeout', '');
