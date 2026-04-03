@@ -1398,7 +1398,7 @@ async function playAudio(base64) {
 }
 
 // ══════════════════════════════════════════════════════════
-// BACKEND COMMUNICATION
+// BACKEND COMMUNICATION (avec timeout 30s)
 // ══════════════════════════════════════════════════════════
 async function sendToAgent(audioBase64, textInput) {
   if (state.isProcessing) return;
@@ -1407,6 +1407,12 @@ async function sendToAgent(audioBase64, textInput) {
   pauseVAD();
   setOrbState('processing');
   setStatus('Analyse...', 'processing');
+  
+  // Préparer le timeout (30 secondes max)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, 30000);
   
   try {
     const payload = {
@@ -1420,20 +1426,54 @@ async function sendToAgent(audioBase64, textInput) {
     if (audioBase64) payload.audio_base64 = audioBase64;
     if (textInput === '__init__') payload.text_input = '__init__';
     
+    // DEBUG: Afficher ce qu'on envoie
+    console.log('📤 Envoi au backend:', {
+      session_id: payload.session_id,
+      responses: payload.responses,
+      history_length: payload.history.length
+    });
+    
     const resp = await fetch(CONFIG.N8N_VOICE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
+    
+    // Annuler le timeout si la requête a réussi
+    clearTimeout(timeoutId);
     
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     
     const data = await resp.json();
     
-    // Update state
+    // DEBUG: Afficher ce qu'on reçoit
+    console.log('📥 Réponse du backend:', {
+      responses: data.responses,
+      history_length: data.history?.length,
+      is_complete: data.is_complete,
+      speech: data.speech?.substring(0, 50) + '...'
+    });
+    
+    // Update state - IMPORTANT: fusionner correctement les responses
     state.history = data.history || state.history;
-    state.responses = { ...state.responses, ...(data.responses || {}) };
+    
+    // Fusionner les nouvelles responses avec les anciennes (ne pas écraser)
+    if (data.responses) {
+      Object.keys(data.responses).forEach(key => {
+        if (data.responses[key]) {
+          state.responses[key] = data.responses[key];
+        }
+      });
+    }
+    
     state.is_complete = data.is_complete || false;
+    
+    // DEBUG: Afficher l'état après mise à jour
+    console.log('💾 État après mise à jour:', {
+      responses: state.responses,
+      is_complete: state.is_complete
+    });
     
     // Update UI
     updateProgressUI();
@@ -1456,10 +1496,21 @@ async function sendToAgent(audioBase64, textInput) {
     }
     
   } catch (e) {
+    // Annuler le timeout en cas d'erreur aussi
+    clearTimeout(timeoutId);
+    
     console.error('Erreur sendToAgent:', e);
-    showToast('Erreur: ' + e.message);
+    
+    // Message d'erreur adapté
+    if (e.name === 'AbortError') {
+      showToast('Timeout - Le serveur met trop de temps. Réessaie.', 4000);
+      setStatus('Timeout', '');
+    } else {
+      showToast('Erreur: ' + e.message);
+      setStatus('Erreur', '');
+    }
+    
     setOrbState('idle');
-    setStatus('Erreur', '');
   } finally {
     state.isProcessing = false;
     if (!state.is_complete && !state.isSpeaking) {
