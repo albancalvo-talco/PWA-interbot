@@ -18,7 +18,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
 <!-- VAD Library -->
-<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.18/dist/bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js"></script>
 
 <style>
 :root {
@@ -1189,6 +1190,11 @@ async function initVAD() {
     // Each frame is ~96ms, so 2000ms / 96 ≈ 21 frames
     const redemptionFrames = Math.round(state.vadSilenceMs / 96);
     
+    // Vérifier que la librairie est chargée
+    if (typeof vad === 'undefined' || !vad.MicVAD) {
+      throw new Error('Librairie VAD non chargée');
+    }
+    
     state.vadInstance = await vad.MicVAD.new({
       positiveSpeechThreshold: 0.8,
       negativeSpeechThreshold: 0.4,
@@ -1221,6 +1227,9 @@ async function initVAD() {
       }
     });
     
+    // Démarrer le VAD
+    state.vadInstance.start();
+    
     setOrbState('idle');
     setStatus('Prêt', '');
     showToast('Micro activé - Parlez !');
@@ -1230,7 +1239,15 @@ async function initVAD() {
     showToast('Erreur micro: ' + e.message);
     setOrbState('idle');
     setStatus('Erreur micro', '');
+    
+    // Fallback : proposer le mode manuel
+    offerManualMode();
   }
+}
+
+function offerManualMode() {
+  // Si VAD échoue, on peut basculer en mode push-to-talk
+  console.log('Basculement en mode manuel (push-to-talk)');
 }
 
 function pauseVAD() {

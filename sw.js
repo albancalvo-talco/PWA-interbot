@@ -13,7 +13,8 @@ const PRECACHE_ASSETS = [
   './manifest.json',
   './logo-centre-talco-lr-seul.pdf.png',
   'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap',
-  'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.18/dist/bundle.min.js'
+  'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.js',
+  'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js'
 ];
 
 // ══════════════════════════════════════════════════════════
