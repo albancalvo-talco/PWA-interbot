@@ -1,10 +1,11 @@
 // ══════════════════════════════════════════════════════════
 // TALCO PWA - Service Worker
-// Version: 1.0.0
+// Version: 1.1.0 (fix iOS Safari OAuth)
 // ══════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'talco-pwa-v1';
+const CACHE_NAME = 'talco-pwa-v2';
 const OFFLINE_URL = './offline.html';
+const APP_HOSTNAME = 'albancalvo-talco.github.io';
 
 // Assets to cache immediately on install
 const PRECACHE_ASSETS = [
@@ -17,11 +18,20 @@ const PRECACHE_ASSETS = [
   'https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.7/dist/bundle.min.js'
 ];
 
+// Domaines à ne jamais cacher (toujours network-only)
+const NETWORK_ONLY_HOSTS = [
+  'n8n.talco-lr.com',
+  'googleapis.com',
+  'accounts.google.com',
+  'oauth2.googleapis.com',
+  'openidconnect.googleapis.com'
+];
+
 // ══════════════════════════════════════════════════════════
 // INSTALL EVENT
 // ══════════════════════════════════════════════════════════
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing...');
+  console.log('[SW] Installing v1.1.0...');
   
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -76,18 +86,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Skip Chrome extensions and other non-http(s) requests
+  // Skip non-http(s) requests (chrome-extension, etc.)
   if (!url.protocol.startsWith('http')) {
     return;
   }
-  
-  // API calls (n8n webhook) - Network only, no cache
-  if (url.hostname.includes('n8n.talco-lr.com') || 
-      url.hostname.includes('googleapis.com')) {
+
+  // FIX iOS Safari : Ne jamais intercepter les navigations vers des domaines externes
+  // Ceci permet à window.location.href vers Google OAuth de fonctionner
+  if (request.mode === 'navigate' && url.hostname !== APP_HOSTNAME) {
+    return;
+  }
+
+  // Network-only : API n8n, Google OAuth, Google APIs
+  const isNetworkOnly = NETWORK_ONLY_HOSTS.some(host => url.hostname.includes(host));
+  if (isNetworkOnly) {
     event.respondWith(
       fetch(request)
         .catch(() => {
-          // Return error response for API failures
           return new Response(
             JSON.stringify({ error: 'Offline - Impossible de contacter le serveur' }),
             { 
@@ -105,7 +120,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(request)
       .then((cachedResponse) => {
         if (cachedResponse) {
-          // Return cached version and update cache in background
+          // Retourner le cache et mettre à jour en arrière-plan
           event.waitUntil(
             fetch(request)
               .then((networkResponse) => {
@@ -119,10 +134,9 @@ self.addEventListener('fetch', (event) => {
           return cachedResponse;
         }
         
-        // Not in cache, fetch from network
+        // Pas en cache → fetch réseau
         return fetch(request)
           .then((networkResponse) => {
-            // Cache successful responses
             if (networkResponse.ok) {
               const responseClone = networkResponse.clone();
               caches.open(CACHE_NAME)
@@ -131,14 +145,13 @@ self.addEventListener('fetch', (event) => {
             return networkResponse;
           })
           .catch(() => {
-            // Return offline page for navigation requests
+            // Page offline pour les navigations
             if (request.mode === 'navigate') {
               return caches.match(OFFLINE_URL)
                 .then((offlineResponse) => {
                   if (offlineResponse) {
                     return offlineResponse;
                   }
-                  // Fallback inline offline page
                   return new Response(
                     `<!DOCTYPE html>
                     <html lang="fr">
@@ -160,19 +173,9 @@ self.addEventListener('fetch', (event) => {
                           padding: 20px;
                           text-align: center;
                         }
-                        .icon {
-                          font-size: 64px;
-                          margin-bottom: 20px;
-                        }
-                        h1 {
-                          font-size: 24px;
-                          margin-bottom: 10px;
-                          color: #E8A900;
-                        }
-                        p {
-                          color: #8A8780;
-                          margin-bottom: 30px;
-                        }
+                        .icon { font-size: 64px; margin-bottom: 20px; }
+                        h1 { font-size: 24px; margin-bottom: 10px; color: #E8A900; }
+                        p { color: #8A8780; margin-bottom: 30px; }
                         button {
                           background: #E8A900;
                           color: #050505;
@@ -192,14 +195,10 @@ self.addEventListener('fetch', (event) => {
                       <button onclick="location.reload()">Réessayer</button>
                     </body>
                     </html>`,
-                    { 
-                      headers: { 'Content-Type': 'text/html; charset=utf-8' }
-                    }
+                    { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
                   );
                 });
             }
-            
-            // Return empty response for other failed requests
             return new Response('', { status: 408 });
           });
       })
@@ -211,7 +210,6 @@ self.addEventListener('fetch', (event) => {
 // ══════════════════════════════════════════════════════════
 self.addEventListener('sync', (event) => {
   console.log('[SW] Background sync:', event.tag);
-  
   if (event.tag === 'sync-reports') {
     // Future: sync offline reports when back online
   }
@@ -224,15 +222,12 @@ self.addEventListener('push', (event) => {
   if (!event.data) return;
   
   const data = event.data.json();
-  
   const options = {
     body: data.body || 'Nouvelle notification TALCO',
     icon: './icon-192.png',
     badge: './icon-72.png',
     vibrate: [100, 50, 100],
-    data: {
-      url: data.url || './'
-    }
+    data: { url: data.url || './' }
   };
   
   event.waitUntil(
@@ -242,10 +237,9 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  
   event.waitUntil(
     clients.openWindow(event.notification.data.url || './')
   );
 });
 
-console.log('[SW] Service Worker loaded');
+console.log('[SW] Service Worker v1.1.0 loaded');
