@@ -6,433 +6,1571 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0e0e0e">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="description" content="TALCO Agent Vocal - Rapport d'intervention par la voix">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>TALCO — Agent Vocal</title>
+
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- VAD Library -->
+<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.18/dist/bundle.min.js"></script>
+
 <style>
-:root{
-  --gold:#E8A900;--gold-dim:#9e7200;--gold-glow:rgba(232,169,0,.15);
-  --bg:#0a0a0a;--s1:#131313;--s2:#1a1a1a;--s3:#242424;
-  --b0:rgba(255,255,255,0.04);--b1:rgba(255,255,255,0.08);--b2:rgba(255,255,255,0.12);
-  --text:#F0ECE6;--text2:#6a6860;--text3:#4a4840;
-  --danger:#e05252;--success:#4ecb7a;--warn:#f5a623;
-}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
-html,body{height:100%;overflow:hidden;}
-body{
-  font-family:'Outfit',sans-serif;background-color:var(--bg);color:var(--text);
-  height:100dvh;display:flex;flex-direction:column;position:relative;
-}
-body::before{
-  content:'';position:absolute;inset:0;
-  background:url('./istockphoto-1328094196-612x612.jpg') center/cover no-repeat;
-  opacity:0.06;filter:grayscale(100%) contrast(120%);z-index:0;pointer-events:none;
+:root {
+  /* Gold accent palette */
+  --gold: #E8A900;
+  --gold-bright: #FFD54F;
+  --gold-dim: #9e7200;
+  --gold-glow: rgba(232, 169, 0, 0.25);
+  
+  /* Dark backgrounds */
+  --bg: #050505;
+  --bg-elevated: #0c0c0c;
+  --surface-1: #111111;
+  --surface-2: #181818;
+  --surface-3: #222222;
+  
+  /* Borders & overlays */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-medium: rgba(255, 255, 255, 0.1);
+  --border-gold: rgba(232, 169, 0, 0.3);
+  
+  /* Text */
+  --text-primary: #F5F3EF;
+  --text-secondary: #8A8780;
+  --text-tertiary: #5A5850;
+  
+  /* States */
+  --listening: #FF6B6B;
+  --speaking: #E8A900;
+  --processing: #7C6AFF;
+  --success: #4ADE80;
+  
+  /* Sizing */
+  --header-height: 56px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 100px;
 }
 
-.screen{display:none;flex-direction:column;height:100dvh;overflow:hidden;position:relative;z-index:1;}
-.screen.active{display:flex;}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
 
-/* ── LOGIN ── */
-#screen-login{align-items:center;justify-content:center;padding:2rem 1.5rem;}
-.login-logo-wrap{background:#fff;border-radius:14px;padding:14px 20px;margin-bottom:2rem;display:inline-block;box-shadow:0 0 0 1px rgba(232,169,0,.15),0 12px 48px rgba(0,0,0,.7);}
-.login-logo-wrap img{width:110px;display:block;pointer-events:none;}
-.login-divider{width:40px;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-dim));border-radius:2px;margin:0 auto 1.8rem;}
-.login-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,8vw,2.6rem);font-weight:800;text-align:center;line-height:1.1;margin-bottom:.4rem;letter-spacing:-.03em;}
-.login-title span{color:var(--gold);}
-.login-sub{font-size:14px;color:var(--text2);text-align:center;margin-bottom:2.6rem;font-weight:300;}
-.btn-google{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--b2);color:var(--text);padding:15px 28px;border-radius:100px;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;max-width:300px;justify-content:center;}
-.btn-google:active{transform:scale(.97);border-color:var(--gold);}
-.btn-google svg{width:20px;height:20px;flex-shrink:0;}
-.login-note{margin-top:1.2rem;font-size:11px;color:var(--text3);text-align:center;}
-.login-spinner{display:none;flex-direction:column;align-items:center;gap:12px;margin-top:1.5rem;}
-.login-spinner.visible{display:flex;}
-.login-spinner .spinner-ring{width:32px;height:32px;border:3px solid var(--b2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
-.login-spinner .spinner-text{font-size:12px;color:var(--text2);}
-#login-error{display:none;margin-top:1rem;padding:10px 16px;background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.3);border-radius:12px;font-size:12px;color:var(--danger);text-align:center;}
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
 
-/* ── WELCOME ── */
-#screen-welcome{align-items:center;justify-content:center;padding:2rem 1.5rem;}
-.welcome-greeting{font-family:'Syne',sans-serif;font-size:clamp(1.4rem,6vw,2rem);font-weight:700;text-align:center;margin-bottom:.6rem;}
-.welcome-greeting span{color:var(--gold);}
-.welcome-desc{font-size:14px;color:var(--text2);text-align:center;margin-bottom:3rem;max-width:280px;line-height:1.5;font-weight:300;}
-.btn-start{display:flex;align-items:center;gap:10px;background:var(--gold);color:#0a0a0a;padding:16px 40px;border-radius:100px;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;cursor:pointer;border:none;transition:all .25s;box-shadow:0 4px 24px rgba(232,169,0,.3);}
-.btn-start:active{transform:scale(.95);box-shadow:0 2px 12px rgba(232,169,0,.2);}
-.btn-start svg{width:22px;height:22px;}
+body {
+  font-family: 'Instrument Sans', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Background texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(232, 169, 0, 0.08), transparent 50%),
+    url('data:image/svg+xml,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.03"/></svg>');
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SCREENS
+   ══════════════════════════════════════════════════════════ */
+.screen {
+  display: none;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.screen.active {
+  display: flex;
+}
+
+/* ══════════════════════════════════════════════════════════
+   LOGIN SCREEN
+   ══════════════════════════════════════════════════════════ */
+#screen-login {
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.login-logo-wrap {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px 24px;
+  margin-bottom: 2.5rem;
+  box-shadow: 
+    0 0 0 1px var(--border-gold),
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    0 0 80px var(--gold-glow);
+}
+
+.login-logo-wrap img {
+  width: 120px;
+  display: block;
+  pointer-events: none;
+}
+
+.login-divider {
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-dim));
+  border-radius: 2px;
+  margin: 0 auto 2rem;
+}
+
+.login-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2rem, 10vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.03em;
+}
+
+.login-title span {
+  color: var(--gold);
+}
+
+.login-sub {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 3rem;
+  font-weight: 400;
+}
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  padding: 16px 32px;
+  border-radius: var(--radius-full);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 320px;
+  justify-content: center;
+}
+
+.btn-google:hover {
+  background: var(--surface-3);
+  border-color: var(--gold-dim);
+}
+
+.btn-google:active {
+  transform: scale(0.97);
+}
+
+.btn-google svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.login-note {
+  margin-top: 1.5rem;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.login-spinner {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 2rem;
+}
+
+.login-spinner.visible {
+  display: flex;
+}
+
+.spinner-ring {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--surface-3);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-spinner-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+#login-error {
+  display: none;
+  margin-top: 1.5rem;
+  padding: 12px 20px;
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.25);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--listening);
+}
+
+/* ══════════════════════════════════════════════════════════
+   MAIN CHAT SCREEN
+   ══════════════════════════════════════════════════════════ */
+#screen-chat {
+  display: none;
+}
+
+#screen-chat.active {
+  display: flex;
+}
 
 /* ── HEADER ── */
-.header{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:rgba(16,16,16,0.7);backdrop-filter:blur(12px);border-bottom:1px solid var(--b0);position:relative;flex-shrink:0;z-index:10;}
-.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4;}
-.header-logo-wrap{background:#fff;border-radius:6px;padding:3px 6px;}
-.header-logo-wrap img{width:44px;display:block;pointer-events:none;}
-.header-right{display:flex;align-items:center;gap:8px;}
-.btn-header{display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:5px 10px;font-family:'Syne',sans-serif;font-size:11px;font-weight:600;color:var(--gold);cursor:pointer;transition:all .2s;}
-.btn-header:active{background:var(--s3);transform:scale(0.95);}
-.btn-header svg{width:14px;height:14px;}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: var(--header-height);
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  z-index: 10;
+}
 
-/* ── ORB ZONE ── */
-.orb-zone{display:flex;flex-direction:column;align-items:center;padding:14px 1rem 10px;flex-shrink:0;}
-.progress-badge{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-.progress-ring{position:relative;width:36px;height:36px;}
-.progress-ring svg{transform:rotate(-90deg);width:36px;height:36px;}
-.progress-ring .ring-bg{fill:none;stroke:var(--s3);stroke-width:3.5;}
-.progress-ring .ring-fill{fill:none;stroke:var(--gold);stroke-width:3.5;stroke-linecap:round;transition:stroke-dashoffset .6s ease;}
-.progress-count{font-family:'DM Mono',monospace;font-size:13px;color:var(--text);letter-spacing:.05em;}
-.progress-count b{color:var(--gold);font-weight:500;}
-.orb-row{display:flex;align-items:center;gap:16px;}
-.orb-wrap{position:relative;width:72px;height:72px;flex-shrink:0;}
-.orb-layer{position:absolute;inset:0;border-radius:50%;pointer-events:none;}
-.orb-bg{background:conic-gradient(from 0deg,rgba(232,169,0,.75),rgba(180,60,80,.55),rgba(90,60,180,.65),rgba(60,120,180,.5),rgba(232,169,0,.75));filter:blur(9px);animation:spin-slow 5s linear infinite;}
-.orb-mid{inset:7px;background:radial-gradient(circle at 40% 35%,rgba(232,169,0,.92),rgba(160,50,80,.7) 45%,rgba(70,50,170,.55) 75%);filter:blur(4px);animation:pulse-mid 2.2s ease-in-out infinite alternate;}
-.orb-core{inset:16px;background:radial-gradient(circle at 42% 38%,rgba(255,222,100,.98),rgba(232,169,0,.85) 45%,rgba(140,40,70,.6) 85%);filter:blur(2px);}
-.orb-shine{inset:0;background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.14),transparent 55%);}
-@keyframes spin-slow{0%{transform:rotate(0);}100%{transform:rotate(360deg);}}
-@keyframes pulse-mid{0%{transform:scale(.92);filter:blur(4px);}100%{transform:scale(1.08);filter:blur(6px);}}
-.orb-bg.idle{animation-duration:7s;filter:blur(9px) saturate(.5);}
-.orb-bg.listening{animation-duration:1.2s;filter:blur(9px) saturate(1.2);}
-.orb-bg.speaking{animation-duration:2.5s;}
-.orb-bg.processing{animation-duration:4s;filter:blur(9px) hue-rotate(30deg);}
-.orb-status-text{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;}
-.orb-status-text.listening{color:var(--danger);font-weight:500;}
-.orb-status-text.speaking{color:var(--gold);font-weight:500;}
-.orb-status-text.processing{color:var(--warn);font-weight:500;}
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+}
 
-/* ── CHAT ── */
-.chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
-.chat-messages{flex:1;overflow-y:auto;padding:10px 16px 8px;display:flex;flex-direction:column;gap:8px;user-select:text;scroll-behavior:smooth;}
-.chat-messages::-webkit-scrollbar{width:3px;}
-.chat-messages::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px;}
-.bubble{max-width:88%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.55;animation:bubble-in .25s ease-out;}
-@keyframes bubble-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-.bubble.agent{align-self:flex-start;background:var(--s2);border:1px solid var(--b1);border-bottom-left-radius:4px;}
-.bubble.agent .bubble-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:.1em;margin-bottom:4px;text-transform:uppercase;}
-.bubble.user{align-self:flex-end;background:rgba(232,169,0,.1);border:1px solid rgba(232,169,0,.18);border-bottom-right-radius:4px;}
-.bubble.user .bubble-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text2);letter-spacing:.1em;margin-bottom:4px;text-align:right;text-transform:uppercase;}
-.typing-indicator{align-self:flex-start;display:none;padding:10px 16px;margin:0 16px;background:var(--s2);border:1px solid var(--b1);border-radius:14px;border-bottom-left-radius:4px;}
-.typing-indicator.visible{display:flex;gap:4px;align-items:center;}
-.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:.4;animation:typing-bounce 1.2s ease-in-out infinite;}
-.typing-dot:nth-child(2){animation-delay:.15s;}
-.typing-dot:nth-child(3){animation-delay:.3s;}
-@keyframes typing-bounce{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-6px);opacity:1;}}
+.header-logo {
+  background: #fff;
+  border-radius: 8px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+}
 
-/* ── MIC BAR ── */
-.mic-bar{display:flex;align-items:center;gap:12px;padding:10px 16px 14px;background:rgba(16,16,16,0.8);backdrop-filter:blur(12px);border-top:1px solid var(--b0);flex-shrink:0;}
-.mic-bar-hint{flex:1;font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.04em;}
-.btn-mic{width:52px;height:52px;border-radius:50%;border:2px solid var(--gold);background:rgba(232,169,0,.08);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;position:relative;}
-.btn-mic:active{transform:scale(.92);}
-.btn-mic.recording{background:rgba(224,82,82,.15);border-color:var(--danger);animation:mic-pulse 1.5s ease-in-out infinite;}
-@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,82,82,.3);}50%{box-shadow:0 0 0 12px rgba(224,82,82,0);}}
-.btn-mic svg{width:22px;height:22px;color:var(--gold);transition:color .2s;}
-.btn-mic.recording svg{color:var(--danger);}
-.btn-mic.disabled{opacity:.3;pointer-events:none;}
-.btn-mic .icon-mic,.btn-mic .icon-stop{position:absolute;}
-.btn-mic .icon-stop{display:none;}
-.btn-mic.recording .icon-mic{display:none;}
-.btn-mic.recording .icon-stop{display:block;}
+.header-logo img {
+  height: 28px;
+  display: block;
+}
 
-/* ── MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(3px);z-index:100;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity 0.3s;}
-.modal-overlay.active{opacity:1;pointer-events:auto;}
-.modal-content{background:var(--bg);height:85dvh;border-radius:24px 24px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.25,1,0.5,1);border-top:1px solid var(--gold-dim);}
-.modal-overlay.active .modal-content{transform:translateY(0);}
-.modal-header{padding:16px 20px;border-bottom:1px solid var(--b1);display:flex;flex-direction:column;gap:12px;}
-.modal-handle{width:40px;height:4px;background:var(--b2);border-radius:2px;margin:0 auto;}
-.modal-title-row{display:flex;justify-content:space-between;align-items:center;}
-.modal-title-row h2{font-family:'Syne',sans-serif;font-size:16px;color:var(--gold);}
-.btn-close{background:transparent;border:none;color:var(--text2);font-size:24px;cursor:pointer;padding:4px;}
-.progress-container{width:100%;}
-.progress-text{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);margin-bottom:6px;text-align:right;}
-.progress-bar-bg{height:6px;background:var(--s2);border-radius:3px;overflow:hidden;}
-.progress-bar-fill{height:100%;background:var(--gold);width:0%;transition:width 0.5s ease;}
-.modal-body{flex:1;overflow:hidden;display:flex;flex-direction:column;padding-bottom:20px;}
-.fields-recap-h{display:flex;gap:8px;padding:16px 20px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--b0);flex-shrink:0;}
-.fields-recap-h::-webkit-scrollbar{display:none;}
-.field-chip{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:10px;white-space:nowrap;flex-shrink:0;}
-.field-chip.done{border-color:rgba(78,203,122,.3);background:rgba(78,203,122,.06);}
-.field-chip.done .fc-dot{background:var(--success);}
-.field-chip .fc-dot{width:6px;height:6px;border-radius:50%;background:var(--b2);flex-shrink:0;}
-.field-chip .fc-label{color:var(--text2);}
-.field-chip.done .fc-label{color:var(--success);}
-.conv-history-modal{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;user-select:text;}
+.header-user {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--b2);border-radius:100px;padding:10px 20px;font-size:12px;color:var(--text);white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;}
-.toast.visible{opacity:1;}
-@keyframes spin{to{transform:rotate(360deg);}}
+.header-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.btn-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+}
+
+.btn-logout svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── MAIN CONTENT ── */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px;
+  gap: 20px;
+}
+
+/* ── PROGRESS SECTION ── */
+.progress-section {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.progress-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.progress-bar-container {
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.progress-bar-bg {
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright));
+  filter: blur(4px);
+}
+
+.progress-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.progress-count b {
+  color: var(--gold);
+  font-weight: 500;
+}
+
+/* ── ORB SECTION ── */
+.orb-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 10px 0;
+}
+
+.orb-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.orb-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orb-glow {
+  inset: -30px;
+  background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+  opacity: 0.6;
+  animation: orb-glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes orb-glow-pulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.4; }
+  50% { transform: scale(1.1); opacity: 0.7; }
+}
+
+.orb-outer {
+  background: conic-gradient(
+    from 0deg,
+    rgba(232, 169, 0, 0.8),
+    rgba(180, 60, 80, 0.6),
+    rgba(100, 60, 180, 0.5),
+    rgba(60, 140, 200, 0.4),
+    rgba(232, 169, 0, 0.8)
+  );
+  filter: blur(12px);
+  animation: orb-spin 6s linear infinite;
+}
+
+.orb-outer.idle { animation-duration: 8s; filter: blur(12px) saturate(0.5); }
+.orb-outer.listening { animation-duration: 1s; filter: blur(12px) saturate(1.3); }
+.orb-outer.speaking { animation-duration: 3s; filter: blur(12px) saturate(1.1); }
+.orb-outer.processing { animation-duration: 4s; filter: blur(12px) hue-rotate(30deg); }
+
+@keyframes orb-spin {
+  to { transform: rotate(360deg); }
+}
+
+.orb-middle {
+  inset: 15px;
+  background: radial-gradient(
+    circle at 40% 35%,
+    rgba(232, 169, 0, 0.95),
+    rgba(180, 60, 80, 0.7) 50%,
+    rgba(80, 50, 160, 0.5) 80%
+  );
+  filter: blur(6px);
+  animation: orb-pulse 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes orb-pulse {
+  0% { transform: scale(0.92); filter: blur(6px); }
+  100% { transform: scale(1.06); filter: blur(8px); }
+}
+
+.orb-core {
+  inset: 30px;
+  background: radial-gradient(
+    circle at 42% 38%,
+    rgba(255, 230, 120, 1),
+    rgba(232, 169, 0, 0.9) 50%,
+    rgba(160, 50, 70, 0.6) 90%
+  );
+  filter: blur(2px);
+}
+
+.orb-shine {
+  inset: 0;
+  background: radial-gradient(
+    circle at 30% 25%,
+    rgba(255, 255, 255, 0.2),
+    transparent 50%
+  );
+}
+
+.orb-status {
+  margin-top: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color 0.3s;
+}
+
+.orb-status.listening { color: var(--listening); }
+.orb-status.speaking { color: var(--speaking); }
+.orb-status.processing { color: var(--processing); }
+
+/* ── ACTION SECTION (Commencer button / Questions) ── */
+.action-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.btn-start {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--gold);
+  color: var(--bg);
+  padding: 18px 48px;
+  border-radius: var(--radius-full);
+  border: none;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 
+    0 4px 20px rgba(232, 169, 0, 0.3),
+    0 0 60px rgba(232, 169, 0, 0.15);
+}
+
+.btn-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 30px rgba(232, 169, 0, 0.4),
+    0 0 80px rgba(232, 169, 0, 0.2);
+}
+
+.btn-start:active {
+  transform: scale(0.96);
+}
+
+.btn-start svg {
+  width: 22px;
+  height: 22px;
+}
+
+.btn-start.hidden {
+  display: none;
+}
+
+/* ── QUESTIONS DISPLAY ── */
+.questions-display {
+  display: none;
+  width: 100%;
+  max-width: 600px;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.questions-display.active {
+  display: flex;
+}
+
+.question-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  transition: all 0.3s ease;
+}
+
+.question-current {
+  flex: 2;
+  border-color: var(--gold-dim);
+  background: linear-gradient(145deg, var(--surface-2), var(--surface-1));
+  box-shadow: 
+    0 0 0 1px var(--border-gold),
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 40px var(--gold-glow);
+}
+
+.question-future {
+  flex: 1;
+  opacity: 0.4;
+  filter: blur(1px);
+  border-color: var(--border-subtle);
+}
+
+.question-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.question-current .question-label {
+  color: var(--gold);
+}
+
+.question-text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.question-future .question-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ── HISTORY SECTION ── */
+.history-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  padding-left: 4px;
+  flex-shrink: 0;
+}
+
+.history-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.history-chips::-webkit-scrollbar {
+  width: 3px;
+}
+
+.history-chips::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 3px;
+}
+
+.history-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-1);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 12px;
+  animation: chip-in 0.3s ease-out;
+}
+
+@keyframes chip-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.history-chip-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.history-chip-icon svg {
+  width: 8px;
+  height: 8px;
+  color: var(--bg);
+}
+
+.history-chip-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.history-chip-value {
+  color: var(--text-primary);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── VAD SETTINGS ── */
+.vad-settings {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface-1);
+  border-radius: var(--radius-md);
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.vad-settings.visible {
+  display: flex;
+}
+
+.vad-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.05em;
+}
+
+.vad-slider {
+  width: 100px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--surface-3);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.vad-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--gold);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(232, 169, 0, 0.4);
+}
+
+.vad-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--gold);
+  min-width: 35px;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface-3);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-full);
+  padding: 12px 24px;
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 300;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .main-content {
+    padding: 30px 40px;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  
+  .orb-container {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .questions-display {
+    max-width: 700px;
+  }
+}
+
+@media (max-height: 700px) {
+  .orb-container {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .main-content {
+    gap: 12px;
+    padding: 12px;
+  }
+}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- ══════════════════════════════════════════════════════════
+     LOGIN SCREEN
+     ══════════════════════════════════════════════════════════ -->
 <div id="screen-login" class="screen active">
-  <div class="login-logo-wrap"><img src="./logo-centre-talco-lr-seul.pdf.png" alt="TALCO LR"></div>
+  <div class="login-logo-wrap">
+    <img src="./logo-centre-talco-lr-seul.pdf.png" alt="TALCO LR">
+  </div>
   <div class="login-divider"></div>
-  <h1 class="login-title">Agent<br><span>vocal</span></h1>
+  <h1 class="login-title">Agent<br><span>Vocal</span></h1>
   <p class="login-sub">Rapport d'intervention par la voix</p>
+  
   <button class="btn-google" id="btn-google-login" onclick="loginWithGoogleRedirect()">
-    <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+    <svg viewBox="0 0 24 24">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
     Se connecter avec Google
   </button>
+  
   <div class="login-spinner" id="login-spinner">
-    <div class="spinner-ring" style="width:32px;height:32px;border:3px solid var(--b2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;"></div>
-    <div style="font-size:12px;color:var(--text2);">Connexion en cours...</div>
+    <div class="spinner-ring"></div>
+    <div class="login-spinner-text">Connexion en cours...</div>
   </div>
+  
   <p class="login-note">Réservé aux comptes @talco-lr.com</p>
   <div id="login-error">⚠ Compte non autorisé</div>
 </div>
 
-<!-- WELCOME -->
-<div id="screen-welcome" class="screen">
-  <div class="welcome-greeting">Bonjour <span id="welcome-name">!</span></div>
-  <p class="welcome-desc">Prêt à remplir votre rapport d'intervention ? L'agent vocal TALCO-IA va vous guider.</p>
-  <button class="btn-start" onclick="beginConversation()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-    Commencer
-  </button>
-</div>
-
-<!-- CHAT -->
+<!-- ══════════════════════════════════════════════════════════
+     MAIN CHAT SCREEN
+     ══════════════════════════════════════════════════════════ -->
 <div id="screen-chat" class="screen">
-  <div class="header">
-    <div class="header-logo-wrap"><img src="./logo-centre-talco-lr-seul.pdf.png" alt="TALCO LR"></div>
-    <div class="header-right">
-      <button class="btn-header" onclick="toggleModal(true)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        Détails
-      </button>
-      <button class="btn-header" style="color:var(--text2);" onclick="logout()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </button>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo">
+      <img src="./logo-centre-talco-lr-seul.pdf.png" alt="TALCO">
     </div>
-  </div>
-
-  <div class="orb-zone">
-    <div class="progress-badge">
-      <div class="progress-ring">
-        <svg viewBox="0 0 36 36">
-          <circle class="ring-bg" cx="18" cy="18" r="15.5"/>
-          <circle class="ring-fill" id="progress-ring-fill" cx="18" cy="18" r="15.5" stroke-dasharray="97.4" stroke-dashoffset="97.4"/>
-        </svg>
+    
+    <div class="header-user">
+      <div class="header-user-avatar" id="user-avatar">JD</div>
+      <span id="user-fullname">Jean Dupont</span>
+    </div>
+    
+    <button class="btn-logout" onclick="logout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </button>
+  </header>
+  
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Progress -->
+    <section class="progress-section">
+      <div class="progress-label">Avancement</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
       </div>
-      <div class="progress-count"><b id="progress-filled">0</b> / <span id="progress-total">16</span></div>
-    </div>
-    <div class="orb-row">
-      <div class="orb-wrap">
-        <div class="orb-layer orb-bg idle" id="orb-bg"></div>
-        <div class="orb-layer orb-mid"></div>
+      <div class="progress-count">
+        <b id="progress-current">0</b> / <span id="progress-total">16</span> champs
+      </div>
+    </section>
+    
+    <!-- Orb -->
+    <section class="orb-section">
+      <div class="orb-container">
+        <div class="orb-layer orb-glow"></div>
+        <div class="orb-layer orb-outer idle" id="orb-outer"></div>
+        <div class="orb-layer orb-middle"></div>
         <div class="orb-layer orb-core"></div>
         <div class="orb-layer orb-shine"></div>
       </div>
-      <div class="orb-status-text" id="orb-status">En attente</div>
+      <div class="orb-status" id="orb-status">En attente</div>
+    </section>
+    
+    <!-- Action: Start Button / Questions -->
+    <section class="action-section">
+      <button class="btn-start" id="btn-start" onclick="startConversation()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        Commencer
+      </button>
+      
+      <div class="questions-display" id="questions-display">
+        <div class="question-card question-current">
+          <div class="question-label">Question actuelle</div>
+          <div class="question-text" id="current-question">Quel est le nom du client ?</div>
+        </div>
+        <div class="question-card question-future">
+          <div class="question-label">Suivante</div>
+          <div class="question-text" id="future-question">Numéro d'affaire ?</div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- VAD Settings -->
+    <div class="vad-settings" id="vad-settings">
+      <span class="vad-label">Délai silence</span>
+      <input type="range" class="vad-slider" id="vad-slider" min="1" max="4" step="0.5" value="2">
+      <span class="vad-value" id="vad-value">2.0s</span>
     </div>
-  </div>
-
-  <div class="chat-area">
-    <div class="chat-messages" id="chat-messages"></div>
-    <div class="typing-indicator" id="typing-indicator">
-      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
-    </div>
-  </div>
-
-  <div class="mic-bar">
-    <div class="mic-bar-hint" id="mic-hint">Appuyez pour parler</div>
-    <button class="btn-mic" id="btn-mic">
-      <svg class="icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-      <svg class="icon-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-    </button>
+    
+    <!-- History -->
+    <section class="history-section" id="history-section" style="display: none;">
+      <div class="history-label">Questions répondues</div>
+      <div class="history-chips" id="history-chips"></div>
+    </section>
   </div>
 </div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="history-modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-handle"></div>
-      <div class="modal-title-row">
-        <h2>Rapport d'intervention</h2>
-        <button class="btn-close" onclick="toggleModal(false)">&times;</button>
-      </div>
-      <div class="progress-container">
-        <div class="progress-text" id="modal-progress-text">0 / 16 champs complétés</div>
-        <div class="progress-bar-bg"><div class="progress-bar-fill" id="modal-progress-fill"></div></div>
-      </div>
-    </div>
-    <div class="modal-body">
-      <div class="fields-recap-h" id="fields-recap"></div>
-      <div class="conv-history-modal" id="conv-history-modal"></div>
-    </div>
-  </div>
-</div>
-
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ══════════════════════════════════════════════════════════ -->
 <script>
-const CONFIG={
-  GOOGLE_CLIENT_ID:'303849110460-10rqg6oco2jseasj4ccsh1n0e4btulea.apps.googleusercontent.com',
-  N8N_VOICE_URL:'https://n8n.talco-lr.com/webhook/talco-voice-chat',
-  ALLOWED_DOMAIN:'talco-lr.com',
-  REDIRECT_URI:window.location.origin+window.location.pathname
+// ══════════════════════════════════════════════════════════
+// CONFIGURATION
+// ══════════════════════════════════════════════════════════
+const CONFIG = {
+  GOOGLE_CLIENT_ID: '303849110460-10rqg6oco2jseasj4ccsh1n0e4btulea.apps.googleusercontent.com',
+  N8N_VOICE_URL: 'https://n8n.talco-lr.com/webhook/talco-voice-chat',
+  ALLOWED_DOMAIN: 'talco-lr.com',
+  REDIRECT_URI: window.location.origin + window.location.pathname,
+  VAD_SILENCE_MS: 2000 // 2 secondes par défaut
 };
-const FIELD_LABELS={nom_client:'Client',numero_affaire:'Affaire',date_debut:'Début',date_fin:'Fin',heure_debut:'H.début',heure_fin:'H.fin',redacteur:'Rédacteur',techniciens_presents:'Techniciens',clients_presents:'Clients site',type_intervention:'Type',designation_precise:'Description',raison_intervention:'Raison',chantier_termine:'Terminé',si_non_details:'Reste à faire',difficultes:'Difficultés',points_attention:'Points attention'};
-const FIELD_ORDER=Object.keys(FIELD_LABELS);
-let state={user:null,session_id:null,history:[],responses:{},is_complete:false,isListening:false,isProcessing:false,mediaRecorder:null,audioChunks:[],currentAudioSource:null};
 
-// Session
-const SESSION_KEY='talco_user_session',SESSION_TTL=7*24*60*60*1000;
-function saveUserSession(u){localStorage.setItem(SESSION_KEY,JSON.stringify({user:u,expires:Date.now()+SESSION_TTL}));}
-function loadUserSession(){try{const r=localStorage.getItem(SESSION_KEY);if(!r)return null;const d=JSON.parse(r);if(Date.now()>d.expires){localStorage.removeItem(SESSION_KEY);return null;}return d.user;}catch(e){return null;}}
+const FIELD_LABELS = {
+  nom_client: 'Client',
+  numero_affaire: 'Affaire',
+  date_debut: 'Début',
+  date_fin: 'Fin',
+  heure_debut: 'H.début',
+  heure_fin: 'H.fin',
+  redacteur: 'Rédacteur',
+  techniciens_presents: 'Techniciens',
+  clients_presents: 'Clients site',
+  type_intervention: 'Type',
+  designation_precise: 'Description',
+  raison_intervention: 'Raison',
+  chantier_termine: 'Terminé',
+  si_non_details: 'Reste à faire',
+  difficultes: 'Difficultés',
+  points_attention: 'Points attention'
+};
 
-// OAuth2 redirect
-function loginWithGoogleRedirect(){
-  const s=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2);
-  sessionStorage.setItem('oauth_state',s);
-  const p=new URLSearchParams({client_id:CONFIG.GOOGLE_CLIENT_ID,redirect_uri:CONFIG.REDIRECT_URI,response_type:'token',scope:'openid email profile',state:s,prompt:'select_account',hd:CONFIG.ALLOWED_DOMAIN});
-  window.location.href='https://accounts.google.com/o/oauth2/v2/auth?'+p.toString();
+const FIELD_ORDER = Object.keys(FIELD_LABELS);
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+const state = {
+  user: null,
+  session_id: null,
+  history: [],
+  responses: {},
+  is_complete: false,
+  currentFieldIndex: 0,
+  vadInstance: null,
+  isListening: false,
+  isProcessing: false,
+  isSpeaking: false,
+  audioContext: null,
+  currentAudioSource: null,
+  vadSilenceMs: CONFIG.VAD_SILENCE_MS
+};
+
+// ══════════════════════════════════════════════════════════
+// SESSION MANAGEMENT
+// ══════════════════════════════════════════════════════════
+const SESSION_KEY = 'talco_user_session';
+const SESSION_TTL = 7 * 24 * 60 * 60 * 1000; // 7 jours
+
+function saveUserSession(user) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    user: user,
+    expires: Date.now() + SESSION_TTL
+  }));
 }
-function handleOAuthRedirect(){
-  const h=window.location.hash.substring(1);if(!h||!h.includes('access_token'))return false;
-  const p=new URLSearchParams(h),token=p.get('access_token'),rs=p.get('state'),ss=sessionStorage.getItem('oauth_state');
-  history.replaceState(null,'',window.location.pathname);sessionStorage.removeItem('oauth_state');
-  if(!rs||rs!==ss){showLoginError('Erreur de sécurité. Réessayez.');return true;}
-  if(!token){showLoginError('Token manquant.');return true;}
-  document.getElementById('btn-google-login').style.display='none';
+
+function loadUserSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (Date.now() > data.expires) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return data.user;
+  } catch (e) {
+    return null;
+  }
+}
+
+function logout() {
+  localStorage.removeItem(SESSION_KEY);
+  state.user = null;
+  state.session_id = null;
+  if (state.vadInstance) {
+    state.vadInstance.destroy();
+    state.vadInstance = null;
+  }
+  showScreen('login');
+  document.getElementById('btn-google-login').style.display = 'flex';
+  document.getElementById('login-spinner').classList.remove('visible');
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════
+// GOOGLE OAUTH
+// ══════════════════════════════════════════════════════════
+function loginWithGoogleRedirect() {
+  const stateToken = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+  sessionStorage.setItem('oauth_state', stateToken);
+  
+  const params = new URLSearchParams({
+    client_id: CONFIG.GOOGLE_CLIENT_ID,
+    redirect_uri: CONFIG.REDIRECT_URI,
+    response_type: 'token',
+    scope: 'openid email profile',
+    state: stateToken,
+    prompt: 'select_account',
+    hd: CONFIG.ALLOWED_DOMAIN
+  });
+  
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+}
+
+function handleOAuthRedirect() {
+  const hash = window.location.hash.substring(1);
+  if (!hash || !hash.includes('access_token')) return false;
+  
+  const params = new URLSearchParams(hash);
+  const token = params.get('access_token');
+  const returnedState = params.get('state');
+  const savedState = sessionStorage.getItem('oauth_state');
+  
+  history.replaceState(null, '', window.location.pathname);
+  sessionStorage.removeItem('oauth_state');
+  
+  if (!returnedState || returnedState !== savedState) {
+    showLoginError('Erreur de sécurité. Réessayez.');
+    return true;
+  }
+  
+  if (!token) {
+    showLoginError('Token manquant.');
+    return true;
+  }
+  
+  document.getElementById('btn-google-login').style.display = 'none';
   document.getElementById('login-spinner').classList.add('visible');
-  fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{'Authorization':'Bearer '+token}})
-  .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-  .then(pr=>{
-    const email=pr.email||'',name=pr.name||email.split('@')[0];
-    if(!email.endsWith('@'+CONFIG.ALLOWED_DOMAIN)){showLoginError('Compte non autorisé.');document.getElementById('btn-google-login').style.display='flex';document.getElementById('login-spinner').classList.remove('visible');return;}
-    state.user={email,name,initials:name.split(' ').map(s=>(s[0]||'')).join('').slice(0,2).toUpperCase()};
-    saveUserSession(state.user);goToWelcome();
-  }).catch(e=>{showLoginError('Erreur. Réessayez.');document.getElementById('btn-google-login').style.display='flex';document.getElementById('login-spinner').classList.remove('visible');});
+  
+  fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(profile => {
+    const email = profile.email || '';
+    const name = profile.name || email.split('@')[0];
+    
+    if (!email.endsWith('@' + CONFIG.ALLOWED_DOMAIN)) {
+      showLoginError('Compte non autorisé.');
+      document.getElementById('btn-google-login').style.display = 'flex';
+      document.getElementById('login-spinner').classList.remove('visible');
+      return;
+    }
+    
+    state.user = {
+      email: email,
+      name: name,
+      initials: name.split(' ').map(s => (s[0] || '')).join('').slice(0, 2).toUpperCase()
+    };
+    
+    saveUserSession(state.user);
+    goToChat();
+  })
+  .catch(e => {
+    showLoginError('Erreur. Réessayez.');
+    document.getElementById('btn-google-login').style.display = 'flex';
+    document.getElementById('login-spinner').classList.remove('visible');
+  });
+  
   return true;
 }
-function showLoginError(m){const e=document.getElementById('login-error');e.textContent='⚠ '+m;e.style.display='block';}
-function logout(){localStorage.removeItem(SESSION_KEY);state.user=null;state.session_id=null;showScreen('login');document.getElementById('btn-google-login').style.display='flex';document.getElementById('login-spinner').classList.remove('visible');document.getElementById('login-error').style.display='none';}
 
-// Welcome → Chat
-function goToWelcome(){document.getElementById('welcome-name').textContent=state.user.name.split(' ')[0]+' !';showScreen('welcome');}
-function beginConversation(){
-  state.session_id=`session_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-  state.history=[];state.responses={};state.is_complete=false;
-  document.getElementById('chat-messages').innerHTML='';
-  document.getElementById('conv-history-modal').innerHTML='';
-  updateProgressUI();showScreen('chat');
-  sendToAgent(null,'__init__');
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
 }
 
-// Init
-window.addEventListener('DOMContentLoaded',()=>{
-  const handled=handleOAuthRedirect();
-  if(!handled){const saved=loadUserSession();if(saved){state.user=saved;goToWelcome();}}
-  document.getElementById('history-modal').addEventListener('click',e=>{if(e.target===document.getElementById('history-modal'))toggleModal(false);});
-});
-
-// ── Recording : tap to talk / tap to stop ──
-const micBtn=document.getElementById('btn-mic');
-micBtn.addEventListener('click',async e=>{
-  e.preventDefault();if(state.isProcessing||state.is_complete)return;
-  if(state.isListening){stopRecording();}
-  else{stopCurrentAudio();await startRecording();}
-});
-
-async function startRecording(){
-  ensureAudioContext();
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    state.audioChunks=[];
-    state.mediaRecorder=new MediaRecorder(stream,{mimeType:'audio/webm'});
-    state.mediaRecorder.ondataavailable=e=>{if(e.data.size>0)state.audioChunks.push(e.data);};
-    state.mediaRecorder.onstop=async()=>{
-      stream.getTracks().forEach(t=>t.stop());
-      const blob=new Blob(state.audioChunks,{type:'audio/webm'});
-      sendToAgent(await blobToBase64(blob),null);
-    };
-    state.mediaRecorder.start();state.isListening=true;
-    micBtn.classList.add('recording');setOrbState('listening');
-    setStatus('Écoute...','listening');
-    document.getElementById('mic-hint').textContent='Appuyez pour envoyer';
-  }catch(e){showToast('Micro non disponible');}
+// ══════════════════════════════════════════════════════════
+// SCREEN NAVIGATION
+// ══════════════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
 }
-function stopRecording(){
-  if(state.mediaRecorder&&state.isListening){
-    state.mediaRecorder.stop();state.isListening=false;
-    micBtn.classList.remove('recording');setOrbState('processing');
-    setStatus('Analyse...','processing');
-    document.getElementById('mic-hint').textContent='Traitement...';
+
+function goToChat() {
+  // Update header with user info
+  document.getElementById('user-avatar').textContent = state.user.initials;
+  document.getElementById('user-fullname').textContent = state.user.name;
+  
+  // Reset state
+  state.session_id = `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  state.history = [];
+  state.responses = {};
+  state.is_complete = false;
+  state.currentFieldIndex = 0;
+  
+  // Reset UI
+  document.getElementById('btn-start').classList.remove('hidden');
+  document.getElementById('questions-display').classList.remove('active');
+  document.getElementById('history-section').style.display = 'none';
+  document.getElementById('history-chips').innerHTML = '';
+  document.getElementById('vad-settings').classList.remove('visible');
+  
+  updateProgressUI();
+  showScreen('chat');
+}
+
+// ══════════════════════════════════════════════════════════
+// CONVERSATION FLOW
+// ══════════════════════════════════════════════════════════
+async function startConversation() {
+  // Hide start button, show questions
+  document.getElementById('btn-start').classList.add('hidden');
+  document.getElementById('questions-display').classList.add('active');
+  document.getElementById('vad-settings').classList.add('visible');
+  document.getElementById('history-section').style.display = 'flex';
+  
+  // Initialize VAD
+  await initVAD();
+  
+  // Send init to backend
+  await sendToAgent(null, '__init__');
+}
+
+// ══════════════════════════════════════════════════════════
+// VAD (Voice Activity Detection)
+// ══════════════════════════════════════════════════════════
+async function initVAD() {
+  if (state.vadInstance) return;
+  
+  try {
+    setOrbState('processing');
+    setStatus('Initialisation micro...', 'processing');
+    
+    // Calculate redemption frames based on silence duration
+    // Each frame is ~96ms, so 2000ms / 96 ≈ 21 frames
+    const redemptionFrames = Math.round(state.vadSilenceMs / 96);
+    
+    state.vadInstance = await vad.MicVAD.new({
+      positiveSpeechThreshold: 0.8,
+      negativeSpeechThreshold: 0.4,
+      redemptionFrames: redemptionFrames,
+      minSpeechFrames: 5,
+      preSpeechPadFrames: 10,
+      
+      onSpeechStart: () => {
+        if (state.isSpeaking || state.isProcessing) return;
+        console.log('🎤 Parole détectée');
+        state.isListening = true;
+        setOrbState('listening');
+        setStatus('Écoute...', 'listening');
+      },
+      
+      onSpeechEnd: async (audio) => {
+        if (state.isSpeaking || state.isProcessing) return;
+        console.log('🔇 Fin de parole détectée');
+        state.isListening = false;
+        
+        // Convert Float32Array to WAV then to base64
+        const wavBlob = float32ToWav(audio, 16000);
+        const base64 = await blobToBase64(wavBlob);
+        
+        await sendToAgent(base64, null);
+      },
+      
+      onVADMisfire: () => {
+        console.log('⚠️ VAD misfire (bruit court)');
+      }
+    });
+    
+    setOrbState('idle');
+    setStatus('Prêt', '');
+    showToast('Micro activé - Parlez !');
+    
+  } catch (e) {
+    console.error('Erreur VAD:', e);
+    showToast('Erreur micro: ' + e.message);
+    setOrbState('idle');
+    setStatus('Erreur micro', '');
   }
 }
-function blobToBase64(b){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(b);});}
 
-// ── Send to n8n ──
-async function sendToAgent(audioBase64,textInput){
-  if(state.isProcessing)return;state.isProcessing=true;
-  micBtn.classList.add('disabled');
-  document.getElementById('typing-indicator').classList.add('visible');
-  try{
-    const payload={session_id:state.session_id,sender_email:state.user.email,sender_name:state.user.name,history:state.history,responses:state.responses};
-    if(audioBase64)payload.audio_base64=audioBase64;
-    if(textInput==='__init__')payload.text_input='__init__';
-    const resp=await fetch(CONFIG.N8N_VOICE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(!resp.ok)throw new Error('HTTP '+resp.status);
-    const data=await resp.json();
-    state.history=data.history||state.history;
-    state.responses={...state.responses,...(data.responses||{})};
-    state.is_complete=data.is_complete||false;
-    if(audioBase64){addBubble('user','🎤 '+(data.user_text&&data.user_text!=='__init__'?data.user_text:'Message vocal'));}
-    if(data.speech)addBubble('agent',data.speech);
-    updateProgressUI();
-    if(data.audio_base64)await playAudio(data.audio_base64);
-    if(state.is_complete){setOrbState('idle');setStatus('Rapport complet ✓','');micBtn.classList.add('disabled');document.getElementById('mic-hint').textContent='Rapport terminé';}
-  }catch(e){addBubble('agent','Erreur de communication avec le serveur.');showToast('Erreur : '+e.message);
-  }finally{
-    state.isProcessing=false;document.getElementById('typing-indicator').classList.remove('visible');
-    if(!state.is_complete){micBtn.classList.remove('disabled');setOrbState('idle');setStatus('En attente','');document.getElementById('mic-hint').textContent='Appuyez pour parler';}
+function pauseVAD() {
+  if (state.vadInstance) {
+    state.vadInstance.pause();
   }
 }
 
-// ── Audio via AudioContext ──
-let audioCtx=null;
-function ensureAudioContext(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();}
-function stopCurrentAudio(){if(state.currentAudioSource){try{state.currentAudioSource.stop();}catch(e){}state.currentAudioSource=null;}}
-async function playAudio(base64){
-  return new Promise(async resolve=>{
-    if(!base64||base64.length<100){resolve();return;}
-    try{
-      stopCurrentAudio();ensureAudioContext();
-      const raw=base64.includes(',')?base64.split(',')[1]:base64;
-      const bin=atob(raw);const bytes=new Uint8Array(bin.length);
-      for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-      const buf=await audioCtx.decodeAudioData(bytes.buffer.slice(0));
-      const src=audioCtx.createBufferSource();src.buffer=buf;src.connect(audioCtx.destination);
-      setOrbState('speaking');setStatus('TALCO-IA parle...','speaking');
-      src.onended=()=>{state.currentAudioSource=null;resolve();};
-      state.currentAudioSource=src;src.start(0);
-    }catch(e){console.error('Erreur playAudio:',e);state.currentAudioSource=null;resolve();}
+function resumeVAD() {
+  if (state.vadInstance && !state.isSpeaking && !state.isProcessing) {
+    state.vadInstance.start();
+  }
+}
+
+// Update VAD settings when slider changes
+document.getElementById('vad-slider').addEventListener('input', (e) => {
+  const value = parseFloat(e.target.value);
+  state.vadSilenceMs = value * 1000;
+  document.getElementById('vad-value').textContent = value.toFixed(1) + 's';
+  
+  // Reinitialize VAD with new settings if active
+  if (state.vadInstance) {
+    state.vadInstance.destroy();
+    state.vadInstance = null;
+    initVAD();
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// AUDIO UTILITIES
+// ══════════════════════════════════════════════════════════
+function float32ToWav(float32Array, sampleRate) {
+  const buffer = new ArrayBuffer(44 + float32Array.length * 2);
+  const view = new DataView(buffer);
+  
+  // WAV header
+  const writeString = (offset, string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+  
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + float32Array.length * 2, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, float32Array.length * 2, true);
+  
+  // Convert float32 to int16
+  let offset = 44;
+  for (let i = 0; i < float32Array.length; i++) {
+    const s = Math.max(-1, Math.min(1, float32Array[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    offset += 2;
+  }
+  
+  return new Blob([buffer], { type: 'audio/wav' });
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
   });
 }
 
-// ── UI ──
-function addBubble(role,text){
-  const mk=()=>{const d=document.createElement('div');d.className='bubble '+role;d.innerHTML=`<div class="bubble-label">${role==='agent'?'TALCO-IA':'Vous'}</div>${escHtml(text)}`;return d;};
-  const c=document.getElementById('chat-messages');c.appendChild(mk());c.scrollTop=c.scrollHeight;
-  const m=document.getElementById('conv-history-modal');m.appendChild(mk());m.scrollTop=m.scrollHeight;
+function ensureAudioContext() {
+  if (!state.audioContext) {
+    state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (state.audioContext.state === 'suspended') {
+    state.audioContext.resume();
+  }
 }
-function updateProgressUI(){
-  const recap=document.getElementById('fields-recap');recap.innerHTML='';let filled=0;
-  FIELD_ORDER.forEach(k=>{const v=state.responses[k];if(v)filled++;const c=document.createElement('div');c.className='field-chip'+(v?' done':'');c.innerHTML=`<div class="fc-dot"></div><span class="fc-label">${FIELD_LABELS[k]}${v?': '+escHtml(v):''}</span>`;recap.appendChild(c);});
-  const total=FIELD_ORDER.length,pct=Math.round((filled/total)*100),circ=97.4;
-  document.getElementById('progress-ring-fill').style.strokeDashoffset=circ-(circ*pct/100);
-  document.getElementById('progress-filled').textContent=filled;
-  document.getElementById('progress-total').textContent=total;
-  document.getElementById('modal-progress-fill').style.width=pct+'%';
-  document.getElementById('modal-progress-text').textContent=`${filled} / ${total} champs complétés`;
+
+function stopCurrentAudio() {
+  if (state.currentAudioSource) {
+    try {
+      state.currentAudioSource.stop();
+    } catch (e) {}
+    state.currentAudioSource = null;
+  }
 }
-function setOrbState(s){document.getElementById('orb-bg').className='orb-layer orb-bg '+s;}
-function setStatus(t,c){const e=document.getElementById('orb-status');e.textContent=t;e.className='orb-status-text'+(c?' '+c:'');}
-function escHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function showScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');}
-function toggleModal(s){document.getElementById('history-modal').classList.toggle('active',s);}
-function showToast(msg,d=3000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('visible');setTimeout(()=>t.classList.remove('visible'),d);}
+
+async function playAudio(base64) {
+  return new Promise(async (resolve) => {
+    if (!base64 || base64.length < 100) {
+      resolve();
+      return;
+    }
+    
+    try {
+      stopCurrentAudio();
+      ensureAudioContext();
+      pauseVAD();
+      
+      state.isSpeaking = true;
+      setOrbState('speaking');
+      setStatus('TALCO-IA parle...', 'speaking');
+      
+      const raw = base64.includes(',') ? base64.split(',')[1] : base64;
+      const binary = atob(raw);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      
+      const audioBuffer = await state.audioContext.decodeAudioData(bytes.buffer.slice(0));
+      const source = state.audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(state.audioContext.destination);
+      
+      source.onended = () => {
+        state.currentAudioSource = null;
+        state.isSpeaking = false;
+        setOrbState('idle');
+        setStatus('À vous...', '');
+        
+        // Resume VAD after speaking
+        setTimeout(() => {
+          resumeVAD();
+        }, 300);
+        
+        resolve();
+      };
+      
+      state.currentAudioSource = source;
+      source.start(0);
+      
+    } catch (e) {
+      console.error('Erreur playAudio:', e);
+      state.currentAudioSource = null;
+      state.isSpeaking = false;
+      resumeVAD();
+      resolve();
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// BACKEND COMMUNICATION
+// ══════════════════════════════════════════════════════════
+async function sendToAgent(audioBase64, textInput) {
+  if (state.isProcessing) return;
+  
+  state.isProcessing = true;
+  pauseVAD();
+  setOrbState('processing');
+  setStatus('Analyse...', 'processing');
+  
+  try {
+    const payload = {
+      session_id: state.session_id,
+      sender_email: state.user.email,
+      sender_name: state.user.name,
+      history: state.history,
+      responses: state.responses
+    };
+    
+    if (audioBase64) payload.audio_base64 = audioBase64;
+    if (textInput === '__init__') payload.text_input = '__init__';
+    
+    const resp = await fetch(CONFIG.N8N_VOICE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    
+    const data = await resp.json();
+    
+    // Update state
+    state.history = data.history || state.history;
+    state.responses = { ...state.responses, ...(data.responses || {}) };
+    state.is_complete = data.is_complete || false;
+    
+    // Update UI
+    updateProgressUI();
+    updateQuestionsUI(data);
+    
+    // Play audio response
+    if (data.audio_base64) {
+      await playAudio(data.audio_base64);
+    }
+    
+    // Check if complete
+    if (state.is_complete) {
+      setOrbState('idle');
+      setStatus('Rapport complet ✓', 'speaking');
+      showToast('Rapport terminé !', 5000);
+      if (state.vadInstance) {
+        state.vadInstance.destroy();
+        state.vadInstance = null;
+      }
+    }
+    
+  } catch (e) {
+    console.error('Erreur sendToAgent:', e);
+    showToast('Erreur: ' + e.message);
+    setOrbState('idle');
+    setStatus('Erreur', '');
+  } finally {
+    state.isProcessing = false;
+    if (!state.is_complete && !state.isSpeaking) {
+      resumeVAD();
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// UI UPDATES
+// ══════════════════════════════════════════════════════════
+function updateProgressUI() {
+  let filled = 0;
+  FIELD_ORDER.forEach(k => {
+    if (state.responses[k]) filled++;
+  });
+  
+  const total = FIELD_ORDER.length;
+  const pct = Math.round((filled / total) * 100);
+  
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-current').textContent = filled;
+  document.getElementById('progress-total').textContent = total;
+}
+
+function updateQuestionsUI(data) {
+  // Update current question
+  if (data.speech) {
+    document.getElementById('current-question').textContent = data.speech;
+  }
+  
+  // Find next unanswered field for future question
+  let nextFieldIndex = -1;
+  for (let i = 0; i < FIELD_ORDER.length; i++) {
+    if (!state.responses[FIELD_ORDER[i]]) {
+      nextFieldIndex = i;
+      break;
+    }
+  }
+  
+  // Show future question (next unanswered after current)
+  if (nextFieldIndex >= 0 && nextFieldIndex < FIELD_ORDER.length - 1) {
+    let futureIndex = nextFieldIndex + 1;
+    while (futureIndex < FIELD_ORDER.length && state.responses[FIELD_ORDER[futureIndex]]) {
+      futureIndex++;
+    }
+    if (futureIndex < FIELD_ORDER.length) {
+      document.getElementById('future-question').textContent = FIELD_LABELS[FIELD_ORDER[futureIndex]] + ' ?';
+    } else {
+      document.getElementById('future-question').textContent = '—';
+    }
+  } else {
+    document.getElementById('future-question').textContent = '—';
+  }
+  
+  // Update history chips
+  const chipsContainer = document.getElementById('history-chips');
+  chipsContainer.innerHTML = '';
+  
+  FIELD_ORDER.forEach(key => {
+    const value = state.responses[key];
+    if (value) {
+      const chip = document.createElement('div');
+      chip.className = 'history-chip';
+      chip.innerHTML = `
+        <div class="history-chip-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <span class="history-chip-label">${FIELD_LABELS[key]}:</span>
+        <span class="history-chip-value">${escapeHtml(value)}</span>
+      `;
+      chipsContainer.appendChild(chip);
+    }
+  });
+}
+
+function setOrbState(state) {
+  const orb = document.getElementById('orb-outer');
+  orb.className = 'orb-layer orb-outer ' + state;
+}
+
+function setStatus(text, className) {
+  const el = document.getElementById('orb-status');
+  el.textContent = text;
+  el.className = 'orb-status' + (className ? ' ' + className : '');
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function showToast(msg, duration = 3000) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('visible');
+  setTimeout(() => toast.classList.remove('visible'), duration);
+}
+
+// ══════════════════════════════════════════════════════════
+// INITIALIZATION
+// ══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  // Check for OAuth redirect
+  const handled = handleOAuthRedirect();
+  
+  if (!handled) {
+    // Check for saved session
+    const saved = loadUserSession();
+    if (saved) {
+      state.user = saved;
+      goToChat();
+    }
+  }
+});
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW registration failed:', err));
+  });
+}
 </script>
 </body>
 </html>
