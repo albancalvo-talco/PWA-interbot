@@ -1373,16 +1373,25 @@ async function playAudio(base64) {
       source.onended = () => {
         state.currentAudioSource = null;
         state.isSpeaking = false;
-        setOrbState('idle');
-        setStatus('À vous...', '');
-        
-        // Resume VAD after speaking
-        setTimeout(() => {
+  
+       // Ne reprendre le VAD que si le rapport n'est pas complet
+        if (!state.is_complete) {
+          setOrbState('idle');
+          setStatus('À vous...', '');
+    
+       // Délai augmenté + double vérification avant de reprendre le VAD
+          setTimeout(() => {
+        if (!state.isSpeaking && !state.isProcessing && !state.is_complete) {
           resumeVAD();
-        }, 300);
-        
-        resolve();
-      };
+      }
+    }, 500);
+  }  else {
+     setOrbState('idle');
+     setStatus('Rapport complet ✓', 'speaking');
+  }
+  
+  resolve();
+};
       
       state.currentAudioSource = source;
       source.start(0);
